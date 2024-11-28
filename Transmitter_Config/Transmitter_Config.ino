@@ -6,7 +6,7 @@
 // Rotary Encoder Pins
 #define CLK_PIN 2
 #define DATA_PIN 3
-#define SWITCH_PIN 4
+#define SWITCH_PIN 7
 
 // Initialize LCD
 LiquidCrystal_I2C lcd(0x27, 20, 4);
@@ -22,7 +22,9 @@ MenuManager menuManager(&lcd, channels, 10);
 
 // Variables for encoder state
 volatile int encoderDirection = 0;
-volatile bool buttonPressed = false;
+bool buttonPressed = false;
+unsigned long lastDebounceTime = 0;
+const unsigned long debounceDelay = 50;
 
 void setup() {
     // Encoder setup
@@ -31,7 +33,6 @@ void setup() {
     pinMode(SWITCH_PIN, INPUT_PULLUP);
 
     attachInterrupt(digitalPinToInterrupt(CLK_PIN), handleEncoder, CHANGE);
-    attachInterrupt(digitalPinToInterrupt(SWITCH_PIN), handleButton, FALLING);
 
     // LCD setup
     lcd.init();
@@ -40,11 +41,30 @@ void setup() {
 }
 
 void loop() {
+    // Check switch state with debouncing
+    static bool lastSwitchState = HIGH;
+    bool currentSwitchState = digitalRead(SWITCH_PIN);
+
+    if (currentSwitchState != lastSwitchState) {
+        lastDebounceTime = millis();
+    }
+
+    if ((millis() - lastDebounceTime) > debounceDelay) {
+        if (currentSwitchState == LOW && !buttonPressed) {
+            buttonPressed = true;
+        } else if (currentSwitchState == HIGH && buttonPressed) {
+            buttonPressed = false;
+        }
+    }
+
+    lastSwitchState = currentSwitchState;
+
+    // Handle encoder and button updates
     if (encoderDirection != 0 || buttonPressed) {
         menuManager.updateEncoder(encoderDirection, buttonPressed);
-        encoderDirection = 0;
-        buttonPressed = false;
+        encoderDirection = 0; // Reset encoder direction
     }
+
     delay(50); // Stabilize loop
 }
 
@@ -55,8 +75,4 @@ void handleEncoder() {
         encoderDirection = (digitalRead(DATA_PIN) == clkState) ? 1 : -1;
     }
     lastClkState = clkState;
-}
-
-void handleButton() {
-    buttonPressed = true;
 }

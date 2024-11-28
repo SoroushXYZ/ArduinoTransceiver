@@ -55,6 +55,9 @@ public:
     }
 
     void updateEncoder(int direction, bool buttonPressed) {
+        Serial.print("Menu Level: ");
+        Serial.println(menuLevel); // Debug current menu level
+
         if (menuLevel == 0) {
             // Navigate channels
             selectedIndex = (selectedIndex + direction + channelCount) % channelCount;
@@ -73,20 +76,25 @@ public:
 
         if (buttonPressed) {
             if (menuLevel == 0) {
-                menuLevel = 1; // Enter settings
-                subMenuIndex = 0;
+                Serial.println("Entering Channel Settings"); // Debug menu transition
+                menuLevel = 1;
+                subMenuIndex = 0; // Start at the first configurable item
             } else if (menuLevel == 1) {
+                Serial.println("Configuring Item"); // Debug configuration action
                 lcd->clear();
                 lcd->setCursor(0, 0);
                 lcd->print("HelloWorld!");
                 channels[selectedIndex].configureItem(subMenuIndex);
-                delay(2000);
+                delay(2000); // Pause for feedback
                 menuLevel = 0; // Return to channel list
             }
         }
 
         displayMenu();
     }
+
+    // Getter for current menu level
+    int getMenuLevel() const { return menuLevel; }
 };
 
 #endif
