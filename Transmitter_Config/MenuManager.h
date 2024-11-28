@@ -20,13 +20,15 @@ private:
     MenuLevel menuLevel; // Enum to track the current menu level
     int subMenuIndex;   // The index of the selected setting
     int scrollOffset;   // The topmost visible item index in settings
+    unsigned long lastButtonPressTime; // Track the last button press time
+    static const unsigned long buttonTimeout = 500; // Timeout for button press in ms
 
     static const int maxVisibleItems = 3; // Number of lines for the scroll menu
 
 public:
     MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, int count)
         : lcd(lcd), channels(channels), channelCount(count), selectedIndex(0),
-          menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0) {}
+          menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0), lastButtonPressTime(0) {}
 
     void displayMenu() {
         lcd->clear();
@@ -76,9 +78,11 @@ public:
     }
 
     void updateEncoder(int direction, bool buttonPressed) {
+        unsigned long currentTime = millis();
+
         if (menuLevel == CHANNEL_LIST) {
-            // Navigate channels
-            selectedIndex = (selectedIndex + direction + channelCount) % channelCount;
+            // Navigate channels (reverse scroll direction)
+            selectedIndex = (selectedIndex - direction + channelCount) % channelCount;
 
             // Update scroll offset
             if (selectedIndex < scrollOffset) {
@@ -87,9 +91,9 @@ public:
                 scrollOffset = selectedIndex - 4 + 1;
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
-            // Navigate settings
+            // Navigate settings (reverse scroll direction)
             int itemCount = channels[selectedIndex].getConfigurableItemCount() + 2; // Add Reset and Back
-            subMenuIndex = (subMenuIndex + direction + itemCount) % itemCount;
+            subMenuIndex = (subMenuIndex - direction + itemCount) % itemCount;
 
             // Update scroll offset
             if (subMenuIndex < scrollOffset) {
@@ -99,7 +103,9 @@ public:
             }
         }
 
-        if (buttonPressed) {
+        if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+            lastButtonPressTime = currentTime; // Update the last button press time
+
             if (menuLevel == CHANNEL_LIST) {
                 menuLevel = CHANNEL_SETTINGS; // Enter settings
                 subMenuIndex = 0;
@@ -111,8 +117,10 @@ public:
                 } else if (subMenuIndex == itemCount) {
                     channels[selectedIndex].resetToDefault();
                 } else {
-                    menuLevel = CHANNEL_LIST; // Back to channel list
-                    scrollOffset = 0;
+                    // Back button logic: transition to CHANNEL_LIST
+                    menuLevel = CHANNEL_LIST;
+                    subMenuIndex = 0;
+                    scrollOffset = selectedIndex - (selectedIndex % 4); // Ensure the list scroll aligns
                 }
             }
         }
