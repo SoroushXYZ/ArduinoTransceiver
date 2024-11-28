@@ -12,7 +12,7 @@ private:
     int maxEndpoint;   // Maximum endpoint
     int centerPoint;   // Center point adjustment
 
-    // Configurable items (fixed-size array)
+    // Configurable items
     const char* configurableItems[5] = {
         "Reverse", "Trim", "Min Endpoint", "Max Endpoint", "Center Point"
     };
@@ -24,7 +24,6 @@ public:
 
     String getName() const { return name; }
 
-    // Get configurable items as a fixed-size array
     const char** getConfigurableItems() const {
         return configurableItems;
     }
@@ -34,14 +33,21 @@ public:
     }
 
     void configureItem(int itemIndex) {
-        // Placeholder logic for configuration
         switch (itemIndex) {
-            case 0: Serial.println("Configure Reverse"); break;
-            case 1: Serial.println("Configure Trim"); break;
-            case 2: Serial.println("Configure Min Endpoint"); break;
-            case 3: Serial.println("Configure Max Endpoint"); break;
-            case 4: Serial.println("Configure Center Point"); break;
+            case 0: reverse = !reverse; break; // Toggle reverse
+            case 1: trim = 0; break;          // Reset trim (example action)
+            case 2: minEndpoint = 1000; break; // Reset endpoints
+            case 3: maxEndpoint = 2000; break;
+            case 4: centerPoint = 1500; break; // Reset center point
         }
+    }
+
+    void resetToDefault() {
+        reverse = false;
+        trim = 0;
+        minEndpoint = 1000;
+        maxEndpoint = 2000;
+        centerPoint = 1500;
     }
 };
 

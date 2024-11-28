@@ -19,9 +19,9 @@ private:
     int selectedIndex;  // The currently selected channel index
     MenuLevel menuLevel; // Enum to track the current menu level
     int subMenuIndex;   // The index of the selected setting
-    int scrollOffset;   // The topmost visible channel index
+    int scrollOffset;   // The topmost visible item index in settings
 
-    static const int maxVisibleItems = 4; // Number of lines on the LCD
+    static const int maxVisibleItems = 3; // Number of lines for the scroll menu
 
 public:
     MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, int count)
@@ -33,7 +33,7 @@ public:
 
         if (menuLevel == CHANNEL_LIST) {
             // Display channel list
-            for (int i = 0; i < maxVisibleItems; i++) {
+            for (int i = 0; i < 4; i++) {
                 int channelIndex = scrollOffset + i;
                 if (channelIndex >= channelCount) break;
 
@@ -46,17 +46,32 @@ public:
                 lcd->print(channels[channelIndex].getName());
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
-            // Display channel settings
-            lcd->clear();
+            // Display channel number on top
             lcd->setCursor(0, 0);
-            lcd->print("Settings for:");
-            lcd->setCursor(0, 1);
             lcd->print(channels[selectedIndex].getName());
 
+            // Display scrollable settings menu
             const char** items = channels[selectedIndex].getConfigurableItems();
-            lcd->setCursor(0, 2);
-            lcd->print("> ");
-            lcd->print(items[subMenuIndex]);
+            int itemCount = channels[selectedIndex].getConfigurableItemCount();
+
+            for (int i = 0; i < maxVisibleItems; i++) {
+                int itemIndex = scrollOffset + i;
+                if (itemIndex >= itemCount + 2) break;
+
+                lcd->setCursor(0, i + 1); // Start from the second row
+                if (itemIndex == subMenuIndex) {
+                    lcd->print("> ");
+                } else {
+                    lcd->print("  ");
+                }
+                if (itemIndex < itemCount) {
+                    lcd->print(items[itemIndex]);
+                } else if (itemIndex == itemCount) {
+                    lcd->print("Reset to Default");
+                } else {
+                    lcd->print("Back");
+                }
+            }
         }
     }
 
@@ -68,26 +83,37 @@ public:
             // Update scroll offset
             if (selectedIndex < scrollOffset) {
                 scrollOffset = selectedIndex;
-            } else if (selectedIndex >= scrollOffset + maxVisibleItems) {
-                scrollOffset = selectedIndex - maxVisibleItems + 1;
+            } else if (selectedIndex >= scrollOffset + 4) {
+                scrollOffset = selectedIndex - 4 + 1;
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
             // Navigate settings
-            int itemCount = channels[selectedIndex].getConfigurableItemCount();
+            int itemCount = channels[selectedIndex].getConfigurableItemCount() + 2; // Add Reset and Back
             subMenuIndex = (subMenuIndex + direction + itemCount) % itemCount;
+
+            // Update scroll offset
+            if (subMenuIndex < scrollOffset) {
+                scrollOffset = subMenuIndex;
+            } else if (subMenuIndex >= scrollOffset + maxVisibleItems) {
+                scrollOffset = subMenuIndex - maxVisibleItems + 1;
+            }
         }
 
         if (buttonPressed) {
             if (menuLevel == CHANNEL_LIST) {
                 menuLevel = CHANNEL_SETTINGS; // Enter settings
                 subMenuIndex = 0;
+                scrollOffset = 0;
             } else if (menuLevel == CHANNEL_SETTINGS) {
-                lcd->clear();
-                lcd->setCursor(0, 0);
-                lcd->print("HelloWorld!");
-                channels[selectedIndex].configureItem(subMenuIndex);
-                delay(2000);
-                menuLevel = CHANNEL_LIST; // Return to channel list
+                int itemCount = channels[selectedIndex].getConfigurableItemCount();
+                if (subMenuIndex < itemCount) {
+                    channels[selectedIndex].configureItem(subMenuIndex);
+                } else if (subMenuIndex == itemCount) {
+                    channels[selectedIndex].resetToDefault();
+                } else {
+                    menuLevel = CHANNEL_LIST; // Back to channel list
+                    scrollOffset = 0;
+                }
             }
         }
 
