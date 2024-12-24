@@ -20,6 +20,7 @@ Please, like share and subscribe : https://www.youtube.com/c/ELECTRONOOBS
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
+#include "Channel.h"
 
 const uint64_t my_radio_pipe = 0xE8E8F0F0E1LL; //Remember that this code should be the same for the receiver
 
@@ -39,7 +40,7 @@ struct Data_to_be_sent {
 //Create a variable with the structure above and name it sent_data
 Data_to_be_sent sent_data;
 
-
+Channel channels[7];
 
 void setup()
 {
@@ -56,6 +57,10 @@ void setup()
   sent_data.ch5 = 0;
   sent_data.ch6 = 0;
   sent_data.ch7 = 0;
+
+  channels[0].pin = A4;
+  channels[0].isAnalog = true;
+  channels[0].reverse = true;
 }
 
 /**************************************************/
@@ -68,7 +73,7 @@ void loop()
   Normal:    data.ch1 = map( analogRead(A0), 0, 1024, 0, 255);
   Reversed:  data.ch1 = map( analogRead(A0), 0, 1024, 255, 0);  */
   
-  sent_data.ch1 = map( analogRead(A4), 0, 1024, 0, 255);
+  sent_data.ch1 = channels[0].read();
   sent_data.ch2 = map( analogRead(A5), 0, 1024, 0, 255);
   sent_data.ch3 = map( analogRead(A6), 0, 1024, 0, 255);
   sent_data.ch4 = map( analogRead(A7), 0, 1024, 0, 255);
