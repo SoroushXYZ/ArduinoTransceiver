@@ -1,22 +1,3 @@
-/* Tranmsitter code for the Arduino Radio control with PWM output
- * Install the NRF24 library to your IDE
- * Upload this code to the Arduino UNO, NANO, Pro mini (5V,16MHz)
- * Connect a NRF24 module to it:
- 
-    Module // Arduino UNO,NANO
-    
-    GND    ->   GND
-    Vcc    ->   3.3V
-    CE     ->   D9
-    CSN    ->   D10
-    CLK    ->   D13
-    MOSI   ->   D11
-    MISO   ->   D12
-
-This code transmits 7 channels with data from pins A0, A1, A2, A3, D2 and D3
-Please, like share and subscribe : https://www.youtube.com/c/ELECTRONOOBS
-*/
-
 #include <SPI.h>
 #include <nRF24L01.h>
 #include <RF24.h>
@@ -35,12 +16,15 @@ struct Data_to_be_sent {
   byte ch5;
   byte ch6;
   byte ch7;
+  byte ch8;
+  byte ch9;
+  byte ch10;
 };
 
 //Create a variable with the structure above and name it sent_data
 Data_to_be_sent sent_data;
 
-Channel channels[7];
+Channel channels[10];
 
 void setup()
 {
@@ -57,14 +41,18 @@ void setup()
   sent_data.ch5 = 0;
   sent_data.ch6 = 0;
   sent_data.ch7 = 0;
+  sent_data.ch8 = 127;
+  sent_data.ch9 = 127;
+  sent_data.ch10 = 0;
 
+  // Define channels and their corresponding input pins
   channels[0].pin = A4;
   channels[0].isAnalog = true;
   channels[0].reverse = true;
+
 }
 
 /**************************************************/
-
 
 void loop()
 {
@@ -74,12 +62,19 @@ void loop()
   Reversed:  data.ch1 = map( analogRead(A0), 0, 1024, 255, 0);  */
   
   sent_data.ch1 = channels[0].read();
-  sent_data.ch2 = map( analogRead(A5), 0, 1024, 0, 255);
-  sent_data.ch3 = map( analogRead(A6), 0, 1024, 0, 255);
-  sent_data.ch4 = map( analogRead(A7), 0, 1024, 0, 255);
-  sent_data.ch5 = digitalRead(2);
-  sent_data.ch6 = digitalRead(3);
-  sent_data.ch7 = map( analogRead(A3), 0, 1024, 0, 255);
+  sent_data.ch2 = map(analogRead(A5), 0, 1024, 0, 255);
+  sent_data.ch3 = map(analogRead(A6), 0, 1024, 0, 255);
+  sent_data.ch4 = map(analogRead(A7), 0, 1024, 0, 255);
+  
+  // Channels 4 and 5, now mapped to 0 and 255
+  sent_data.ch5 = digitalRead(2) == HIGH ? 255 : 0;
+  sent_data.ch6 = digitalRead(3) == HIGH ? 255 : 0;
+  
+  sent_data.ch7 = map(analogRead(A3), 0, 1024, 0, 255);
+  sent_data.ch8 = map(analogRead(A0), 0, 1024, 0, 255);
+  sent_data.ch9 = map(analogRead(A1), 0, 1024, 0, 255);
+  sent_data.ch10 = map(analogRead(A2), 0, 1024, 0, 255);
 
+  // Send the updated data
   radio.write(&sent_data, sizeof(Data_to_be_sent));
 }
