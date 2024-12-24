@@ -23,6 +23,7 @@ public:
           minEndpoint(1000), maxEndpoint(2000), centerPoint(1500) {}
 
     String getName() const { return name; }
+    void setName(const String& newName) { name = newName; }
 
     const char** getConfigurableItems() const {
         return configurableItems;

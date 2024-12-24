@@ -4,75 +4,83 @@
 #include "MenuManager.h"
 
 // Rotary Encoder Pins
-#define CLK_PIN 2
-#define DATA_PIN 3
-#define SWITCH_PIN 7
+#define CLK 11
+#define DT 12
+#define SW A0  // Switch connected to A0
 
-// Initialize LCD
+// Buzzer Pin
+#define BUZZER_PIN 10  // Pin 10 connected to the buzzer
+
+// LCD Initialization
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
-// Initialize Channels
-Channel channels[10] = {
-    Channel(1), Channel(2), Channel(3), Channel(4), Channel(5),
-    Channel(6), Channel(7), Channel(8), Channel(9), Channel(10)
-};
+// Menu Setup
+Channel channels[] = {Channel(1), Channel(2), Channel(3), Channel(4)};
+MenuManager menu(&lcd, channels, 4);
 
-// Initialize Menu Manager
-MenuManager menuManager(&lcd, channels, 10);
-
-// Variables for encoder state
-volatile int encoderDirection = 0;
-bool buttonPressed = false;
+// Encoder Variables
+int lastStateCLK;
+int lastButtonState;
 unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 50;
 
 void setup() {
-    // Encoder setup
-    pinMode(CLK_PIN, INPUT_PULLUP);
-    pinMode(DATA_PIN, INPUT_PULLUP);
-    pinMode(SWITCH_PIN, INPUT_PULLUP);
+  channels[0].setName("CH1 Ailerons");
+  channels[1].setName("CH2 Elevator");
+  channels[2].setName("CH3 Throttle");
+  channels[3].setName("CH4 Rudder");
+  
+  pinMode(CLK, INPUT);
+  pinMode(DT, INPUT);
+  pinMode(SW, INPUT_PULLUP);
+  pinMode(BUZZER_PIN, OUTPUT);  // Set buzzer pin as output
 
-    attachInterrupt(digitalPinToInterrupt(CLK_PIN), handleEncoder, CHANGE);
+  lcd.init();
+  lcd.backlight();
 
-    // LCD setup
-    lcd.init();
-    lcd.backlight();
-    menuManager.displayMenu();
+  lastStateCLK = digitalRead(CLK);
+  lastButtonState = digitalRead(SW);
+
+  menu.displayMenu();
 }
 
 void loop() {
-    // Check switch state with debouncing
-    static bool lastSwitchState = HIGH;
-    bool currentSwitchState = digitalRead(SWITCH_PIN);
+  int currentStateCLK = digitalRead(CLK);
+  int currentButtonState = digitalRead(SW);
+  int direction = 0;
+  bool buttonPressed = false;
 
-    if (currentSwitchState != lastSwitchState) {
-        lastDebounceTime = millis();
+  // Handle rotation
+  if (currentStateCLK != lastStateCLK) {
+    if (millis() - lastDebounceTime > debounceDelay) {
+      // Reverse the direction by flipping the comparison
+      if (digitalRead(DT) == currentStateCLK) { // Swapped condition
+        direction = 1; // CW (Reversed to CCW)
+      } else {
+        direction = -1; // CCW (Reversed to CW)
+      }
+      lastDebounceTime = millis();
+      tone(BUZZER_PIN, 1000, 50);  // Play buzzer sound (1000 Hz, 50 ms)
     }
+  }
 
-    if ((millis() - lastDebounceTime) > debounceDelay) {
-        if (currentSwitchState == LOW && !buttonPressed) {
-            buttonPressed = true;
-        } else if (currentSwitchState == HIGH && buttonPressed) {
-            buttonPressed = false;
-        }
+  lastStateCLK = currentStateCLK;
+
+  // Handle button press
+  if (currentButtonState != lastButtonState) {
+    if (millis() - lastDebounceTime > debounceDelay) {
+      if (currentButtonState == LOW) {
+        buttonPressed = true;
+        tone(BUZZER_PIN, 1000, 50);  // Play buzzer sound for button press
+      }
+      lastDebounceTime = millis();
     }
+  }
 
-    lastSwitchState = currentSwitchState;
+  lastButtonState = currentButtonState;
 
-    // Handle encoder and button updates
-    if (encoderDirection != 0 || buttonPressed) {
-        menuManager.updateEncoder(encoderDirection, buttonPressed);
-        encoderDirection = 0; // Reset encoder direction
-    }
-
-    delay(50); // Stabilize loop
-}
-
-void handleEncoder() {
-    static int lastClkState = HIGH;
-    int clkState = digitalRead(CLK_PIN);
-    if (clkState != lastClkState) {
-        encoderDirection = (digitalRead(DATA_PIN) == clkState) ? 1 : -1;
-    }
-    lastClkState = clkState;
+  // Update the menu manager
+  if (direction != 0 || buttonPressed) {
+    menu.updateEncoder(direction, buttonPressed);
+  }
 }
