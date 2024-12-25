@@ -39,6 +39,19 @@ public:
         }
     }
 
+    // Setter for pin with mode handling (two pins for 3-state switch)
+    void setPin(int p, int p2) {
+        pin = p;
+        pin2 = p2;
+        // Set the pin mode based on input type
+        if (inputType == ANALOG) {
+            pinMode(pin, INPUT);  // Analog inputs are set to INPUT
+        } else if (inputType == DIGITAL || inputType == THREE_STATE) {
+            pinMode(pin, INPUT_PULLUP);  // Digital or 3-state inputs are set to INPUT_PULLUP
+            pinMode(pin2, INPUT_PULLUP);  // Set second pin to INPUT_PULLUP for 3-state switch
+        }
+    }
+
     // Getter for pin
     int getPin() const {
         return pin;
@@ -109,9 +122,9 @@ public:
         int state2 = digitalRead(pin2);
         
         if (state1 == LOW && state2 == LOW) {
-            return minEndpoint;  // State 1: both LOW
-        } else if (state1 == LOW && state2 == HIGH) {
             return centerPoint;  // State 2: LOW, HIGH
+        } else if (state1 == LOW && state2 == HIGH) {
+          return minEndpoint;  // State 1: both LOW
         } else if (state1 == HIGH && state2 == LOW) {
             return maxEndpoint;  // State 3: HIGH, LOW
         } else {

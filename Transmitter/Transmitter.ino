@@ -46,9 +46,11 @@ void setup()
   sent_data.ch10 = 0;
 
   // Define channels and their corresponding input pins
-  channels[0].setPin(A4);
-  channels[0].setInputType(ANALOG);
-  channels[0].setReverse(true);
+  channels[0].setPin(2);
+  channels[0].setInputType(DIGITAL);
+  
+  
+  // channels[0].setReverse(true);
 
 }
 
