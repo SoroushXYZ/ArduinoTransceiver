@@ -34,6 +34,7 @@ public:
         lcd->clear();
 
         if (menuLevel == CHANNEL_LIST) {
+            updateChannelValues();
             // Display channel list
             for (int i = 0; i < 4; i++) {
                 int channelIndex = scrollOffset + i;
@@ -41,11 +42,13 @@ public:
 
                 lcd->setCursor(0, i);
                 if (channelIndex == selectedIndex) {
-                    lcd->print("> ");
+                    lcd->print(F("> "));
                 } else {
-                    lcd->print("  ");
+                    lcd->print(F("  "));
                 }
-                lcd->print(channels[channelIndex].getName());
+                // lcd->print(channels[channelIndex].getName());
+                lcd->print("CH " + String(channelIndex + 1) + " ");
+                lcd->print(channels[channelIndex].getValue());
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
             // Display channel number on top
@@ -69,9 +72,9 @@ public:
                 if (itemIndex < itemCount) {
                     lcd->print(items[itemIndex]);
                 } else if (itemIndex == itemCount) {
-                    lcd->print("Reset to Default");
+                    lcd->print(F("Reset to Default"));
                 } else {
-                    lcd->print("Back");
+                    lcd->print(F("Back"));
                 }
             }
         }

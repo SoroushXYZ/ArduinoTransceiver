@@ -1,6 +1,7 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "Channel.h"
+#include "CommunicationMaster.h"
 #include "MenuManager.h"
 
 // Rotary Encoder Pins
@@ -15,8 +16,9 @@
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 // Menu Setup
-Channel channels[] = {Channel(1), Channel(2), Channel(3), Channel(4)};
-MenuManager menu(&lcd, channels, 4);
+Channel channels[] = {Channel(1), Channel(2), Channel(3), Channel(4), Channel(5),
+Channel(6), Channel(7), Channel(8), Channel(9), Channel(10)};
+MenuManager menu(&lcd, channels, 10);
 
 // Encoder Variables
 int lastStateCLK;
@@ -25,10 +27,14 @@ unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 50;
 
 void setup() {
-  channels[0].setName("CH1 Ailerons");
-  channels[1].setName("CH2 Elevator");
-  channels[2].setName("CH3 Throttle");
-  channels[3].setName("CH4 Rudder");
+  Serial.begin(9600);  // Initialize Serial
+  delay(1000);
+  Serial.println(F("Setup Complete?"));
+
+  channels[0].setName(F("Ailerons"));
+  channels[1].setName(F("Elevator"));
+  channels[2].setName(F("Throttle"));
+  channels[3].setName(F("Rudder"));
   
   pinMode(CLK, INPUT);
   pinMode(DT, INPUT);
@@ -45,6 +51,10 @@ void setup() {
 }
 
 void loop() {
+  handleEncoder();
+}
+
+void handleEncoder(){
   int currentStateCLK = digitalRead(CLK);
   int currentButtonState = digitalRead(SW);
   int direction = 0;
@@ -60,7 +70,7 @@ void loop() {
         direction = -1; // CCW (Reversed to CW)
       }
       lastDebounceTime = millis();
-      tone(BUZZER_PIN, 1000, 50);  // Play buzzer sound (1000 Hz, 50 ms)
+      tone(BUZZER_PIN, 1700, 10);  // Play buzzer sound (1000 Hz, 50 ms)
     }
   }
 
@@ -71,7 +81,7 @@ void loop() {
     if (millis() - lastDebounceTime > debounceDelay) {
       if (currentButtonState == LOW) {
         buttonPressed = true;
-        tone(BUZZER_PIN, 1000, 50);  // Play buzzer sound for button press
+        tone(BUZZER_PIN, 1400, 50);  // Play buzzer sound for button press
       }
       lastDebounceTime = millis();
     }

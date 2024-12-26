@@ -6,6 +6,7 @@
 class Channel {
 private:
     String name;       // Name of the channel
+    int value;         // Computed value of the channel
     bool reverse;      // Channel reversing
     int trim;          // Trim adjustment
     int minEndpoint;   // Minimum endpoint
@@ -24,6 +25,9 @@ public:
 
     String getName() const { return name; }
     void setName(const String& newName) { name = newName; }
+
+    int getValue() const { return value; }
+    void setValue(int newValue) { value = newValue; }  // Add this to set value dynamically
 
     const char** getConfigurableItems() const {
         return configurableItems;

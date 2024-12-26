@@ -17,6 +17,7 @@ void setup() {
 
     // Initialize Serial for debugging
     Serial.begin(9600);
+    Serial.setTimeout(10);
 
     // Load channel configurations
     inputHandler.loadFromEEPROM();
