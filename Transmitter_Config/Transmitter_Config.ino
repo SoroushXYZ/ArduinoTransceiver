@@ -16,8 +16,10 @@
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 // Menu Setup
-Channel channels[] = {Channel(1), Channel(2), Channel(3), Channel(4), Channel(5),
-Channel(6), Channel(7), Channel(8), Channel(9), Channel(10)};
+Channel channels[] = {
+    Channel(1), Channel(2), Channel(3), Channel(4), Channel(5),
+    Channel(6), Channel(7), Channel(8), Channel(9), Channel(10)
+};
 MenuManager menu(&lcd, channels, 10);
 
 // Encoder Variables
@@ -31,30 +33,36 @@ void setup() {
   delay(1000);
   Serial.println(F("Setup Complete?"));
 
-  channels[0].setName(F("Ailerons"));
-  channels[1].setName(F("Elevator"));
-  channels[2].setName(F("Throttle"));
-  channels[3].setName(F("Rudder"));
-  
+  // Initialize channel names
+  channels[0].setName("Ailerons");
+  channels[1].setName("Elevator");
+  channels[2].setName("Throttle");
+  channels[3].setName("Rudder");
+
+  // Initialize pins
   pinMode(CLK, INPUT);
   pinMode(DT, INPUT);
   pinMode(SW, INPUT_PULLUP);
   pinMode(BUZZER_PIN, OUTPUT);  // Set buzzer pin as output
 
+  // Initialize LCD
   lcd.init();
   lcd.backlight();
 
+  // Initialize encoder state
   lastStateCLK = digitalRead(CLK);
   lastButtonState = digitalRead(SW);
 
+  // Display the initial menu
   menu.displayMenu();
 }
 
 void loop() {
   handleEncoder();
+  handleTimedUpdates();
 }
 
-void handleEncoder(){
+void handleEncoder() {
   int currentStateCLK = digitalRead(CLK);
   int currentButtonState = digitalRead(SW);
   int direction = 0;
@@ -70,7 +78,7 @@ void handleEncoder(){
         direction = -1; // CCW (Reversed to CW)
       }
       lastDebounceTime = millis();
-      tone(BUZZER_PIN, 1700, 10);  // Play buzzer sound (1000 Hz, 50 ms)
+      tone(BUZZER_PIN, 1700, 10);  // Play buzzer sound (1700 Hz, 10 ms)
     }
   }
 

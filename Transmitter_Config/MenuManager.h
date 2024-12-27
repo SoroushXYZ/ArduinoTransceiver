@@ -46,14 +46,14 @@ public:
                 } else {
                     lcd->print(F("  "));
                 }
-                // lcd->print(channels[channelIndex].getName());
-                lcd->print("CH " + String(channelIndex + 1) + " ");
+                lcd->print(channels[channelIndex].getName()); // Use char[] name directly
+                lcd->print(" ");
                 lcd->print(channels[channelIndex].getValue());
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
-            // Display channel number on top
+            // Display channel name on top
             lcd->setCursor(0, 0);
-            lcd->print(channels[selectedIndex].getName());
+            lcd->print(channels[selectedIndex].getName()); // Use char[] name directly
 
             // Display scrollable settings menu
             const char** items = channels[selectedIndex].getConfigurableItems();
@@ -129,6 +129,10 @@ public:
         }
 
         displayMenu();
+    }
+
+    void getMenuLevel(){
+      return menuLevel;
     }
 };
 
