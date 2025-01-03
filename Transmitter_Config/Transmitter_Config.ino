@@ -3,6 +3,7 @@
 #include "Channel.h"
 #include "CommunicationMaster.h"
 #include "MenuManager.h"
+// #include "TimedUpdateHandler.h"
 
 // Rotary Encoder Pins
 #define CLK 11
@@ -28,6 +29,21 @@ int lastButtonState;
 unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 50;
 
+byte customChars[6][8] = {
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Empty block
+    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10}, // 20% full
+    {0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18}, // 40% full
+    {0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C}, // 60% full
+    {0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E}, // 80% full
+    {0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F}  // Full block
+};
+
+void setupCustomCharacters(LiquidCrystal_I2C &lcd) {
+    for (uint8_t i = 0; i < 6; i++) {
+        lcd.createChar(i, customChars[i]);
+    }
+}
+
 void setup() {
   Serial.begin(9600);  // Initialize Serial
   delay(1000);
@@ -48,6 +64,7 @@ void setup() {
   // Initialize LCD
   lcd.init();
   lcd.backlight();
+  setupCustomCharacters(lcd);
 
   // Initialize encoder state
   lastStateCLK = digitalRead(CLK);
@@ -59,7 +76,7 @@ void setup() {
 
 void loop() {
   handleEncoder();
-  handleTimedUpdates();
+  // handleTimedUpdates(menu);
 }
 
 void handleEncoder() {

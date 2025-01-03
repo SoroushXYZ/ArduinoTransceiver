@@ -15,72 +15,66 @@ class MenuManager {
 private:
     LiquidCrystal_I2C* lcd;
     Channel* channels;
-    int channelCount;
-    int selectedIndex;  // The currently selected channel index
-    MenuLevel menuLevel; // Enum to track the current menu level
-    int subMenuIndex;   // The index of the selected setting
-    int scrollOffset;   // The topmost visible item index in settings
+    uint8_t channelCount;  // Number of channels
+    uint8_t selectedIndex; // The currently selected channel index
+    MenuLevel menuLevel;   // Enum to track the current menu level
+    uint8_t subMenuIndex;  // The index of the selected setting
+    uint8_t scrollOffset;  // The topmost visible item index in settings
     unsigned long lastButtonPressTime; // Track the last button press time
     static const unsigned long buttonTimeout = 500; // Timeout for button press in ms
 
-    static const int maxVisibleItems = 3; // Number of lines for the scroll menu
+    static const uint8_t maxVisibleItems = 3; // Number of lines for the scroll menu
 
 public:
-    MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, int count)
+    MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, uint8_t count)
         : lcd(lcd), channels(channels), channelCount(count), selectedIndex(0),
           menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0), lastButtonPressTime(0) {}
 
-    void displayMenu() {
-        lcd->clear();
+void displayMenu() {
+    lcd->clear();
 
-        if (menuLevel == CHANNEL_LIST) {
-            updateChannelValues();
-            // Display channel list
-            for (int i = 0; i < 4; i++) {
-                int channelIndex = scrollOffset + i;
-                if (channelIndex >= channelCount) break;
+    if (menuLevel == CHANNEL_LIST) {
+        // Display channel list
+        for (uint8_t i = 0; i < 4; i++) {
+            uint8_t channelIndex = scrollOffset + i;
+            if (channelIndex >= channelCount) break;
 
-                lcd->setCursor(0, i);
-                if (channelIndex == selectedIndex) {
-                    lcd->print(F("> "));
-                } else {
-                    lcd->print(F("  "));
-                }
-                lcd->print(channels[channelIndex].getName()); // Use char[] name directly
-                lcd->print(" ");
-                lcd->print(channels[channelIndex].getValue());
-            }
-        } else if (menuLevel == CHANNEL_SETTINGS) {
-            // Display channel name on top
-            lcd->setCursor(0, 0);
-            lcd->print(channels[selectedIndex].getName()); // Use char[] name directly
+            lcd->setCursor(0, i);
 
-            // Display scrollable settings menu
-            const char** items = channels[selectedIndex].getConfigurableItems();
-            int itemCount = channels[selectedIndex].getConfigurableItemCount();
+            // Display cursor for the selected channel
+            lcd->print(channelIndex == selectedIndex ? F("> ") : F("  "));
 
-            for (int i = 0; i < maxVisibleItems; i++) {
-                int itemIndex = scrollOffset + i;
-                if (itemIndex >= itemCount + 2) break;
+            // Display the channel name
+            lcd->print(channels[channelIndex].getName());
+        }
+    } else if (menuLevel == CHANNEL_SETTINGS) {
+        // Display channel name on top
+        lcd->setCursor(0, 0);
+        lcd->print(channels[selectedIndex].getName());
 
-                lcd->setCursor(0, i + 1); // Start from the second row
-                if (itemIndex == subMenuIndex) {
-                    lcd->print("> ");
-                } else {
-                    lcd->print("  ");
-                }
-                if (itemIndex < itemCount) {
-                    lcd->print(items[itemIndex]);
-                } else if (itemIndex == itemCount) {
-                    lcd->print(F("Reset to Default"));
-                } else {
-                    lcd->print(F("Back"));
-                }
+        // Display scrollable settings menu
+        char buffer[16];
+        for (uint8_t i = 0; i < maxVisibleItems; i++) {
+            uint8_t itemIndex = scrollOffset + i;
+            lcd->setCursor(0, i + 1);
+            lcd->print(itemIndex == subMenuIndex ? F("> ") : F("  "));
+
+            if (itemIndex < channels[selectedIndex].getConfigurableItemCount()) {
+                channels[selectedIndex].getConfigurableItem(itemIndex, buffer, sizeof(buffer));
+                lcd->print(buffer);
+            } else if (itemIndex == channels[selectedIndex].getConfigurableItemCount()) {
+                lcd->print(F("Reset to Default"));
+            } else {
+                lcd->print(F("Back"));
             }
         }
     }
+}
 
-    void updateEncoder(int direction, bool buttonPressed) {
+
+
+
+    void updateEncoder(int8_t direction, bool buttonPressed) {
         unsigned long currentTime = millis();
 
         if (menuLevel == CHANNEL_LIST) {
@@ -95,7 +89,7 @@ public:
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
             // Navigate settings (reverse scroll direction)
-            int itemCount = channels[selectedIndex].getConfigurableItemCount() + 2; // Add Reset and Back
+            uint8_t itemCount = channels[selectedIndex].getConfigurableItemCount() + 2; // Add Reset and Back
             subMenuIndex = (subMenuIndex - direction + itemCount) % itemCount;
 
             // Update scroll offset
@@ -114,7 +108,7 @@ public:
                 subMenuIndex = 0;
                 scrollOffset = 0;
             } else if (menuLevel == CHANNEL_SETTINGS) {
-                int itemCount = channels[selectedIndex].getConfigurableItemCount();
+                uint8_t itemCount = channels[selectedIndex].getConfigurableItemCount();
                 if (subMenuIndex < itemCount) {
                     channels[selectedIndex].configureItem(subMenuIndex);
                 } else if (subMenuIndex == itemCount) {
@@ -131,8 +125,8 @@ public:
         displayMenu();
     }
 
-    void getMenuLevel(){
-      return menuLevel;
+    MenuLevel getMenuLevel() const {
+        return menuLevel;
     }
 };
 
