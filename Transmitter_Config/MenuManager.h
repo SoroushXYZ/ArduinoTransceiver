@@ -176,6 +176,8 @@ public:
 
         if (menuLevel == CHANNEL_LIST) {
             selectedIndex = (selectedIndex - direction + channelCount) % channelCount;
+            updateChannelValues();
+            updateChannelConfigs(selectedIndex);
 
             if (selectedIndex < scrollOffset) {
                 scrollOffset = selectedIndex;

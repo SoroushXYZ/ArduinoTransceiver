@@ -1,3 +1,4 @@
+#include <avr/common.h>
 #include "Channel.h"
 
 // Assuming you have an array of 10 channels
@@ -26,26 +27,33 @@ void updateChannelValues() {
     }
 }
 
-// #include "Channel.h"
+// Function to request a channel configuration
+void updateChannelConfigs(int channelIndex) {
+    // Send request string, e.g., "C0" for channel 0
+    Serial.print(F("C"));
+    Serial.println(channelIndex);
 
-// // Assuming you have an array of 10 channels
-// extern Channel channels[10];
+    // Wait for the incoming struct data
+    unsigned long startTime = millis();
+    int structSize = sizeof(ChannelConfig);
+    while (Serial.available() < structSize) {
+        if (millis() - startTime > 1000) {
+            Serial.println(F("Timeout: No response"));
+            return;
+        }
+    }
 
-// // Variable to track the current value for simulation
-// uint8_t simulatedValue = 0;
+    // Read the struct data from the serial buffer
+    byte buffer[structSize];
+    Serial.readBytes(buffer, structSize);
 
-// void updateChannelValues() {
-//     // Increment the value and reset if it exceeds 255
-//     simulatedValue = (simulatedValue + 5) % 256;  // Increase by 5 for a smoother transition
+    // Convert the bytes into a struct
+    ChannelConfig config;
+    memcpy(&config, buffer, structSize);
 
-//     // Simulate sending the same value to all channels
-//     for (int i = 0; i < 10; i++) {
-//         channels[i].setValue(simulatedValue);
-//     }
+    channels[channelIndex].reverse = config.reverse;
+    channels[channelIndex].trim = config.trim;
+    channels[channelIndex].deviceType = config.deviceType;
+    channels[channelIndex].deviceId = config.deviceId;
 
-//     // Debug output to monitor the simulated values
-//     Serial.print(F("Simulated Value: "));
-//     Serial.println(simulatedValue);
-
-//     delay(100);  // Add a small delay to make the updates visible in real-time
-// }
+}
