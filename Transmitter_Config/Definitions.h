@@ -21,3 +21,26 @@ struct ChannelConfig {
     uint8_t maxEndpoint;   // Maximum endpoint
     uint8_t centerPoint;   // Center point adjustment
 };
+
+struct DeviceOption {
+    const char* displayName;  // Display name
+    const char* shortCode;    // Short name for slave communication
+};
+
+const DeviceOption deviceOptions[] = {
+    {"Joystick 1", "J1"},
+    {"Joystick 2", "J2"},
+    {"Joystick 3", "J3"},
+    {"Joystick 4", "J4"},
+    {"Analog 1", "A1"},
+    {"Analog 2", "A2"},
+    {"Analog 3", "A3"},
+    {"Analog 4", "A4"},
+    {"Switch 1", "S1"},
+    {"Switch 2", "S2"},
+    {"Digital 1", "D1"},
+    {"Digital 2", "D2"},
+    {"Digital 3", "D3"}
+};
+
+const uint8_t numDeviceOptions = sizeof(deviceOptions) / sizeof(deviceOptions[0]);  // 13 options

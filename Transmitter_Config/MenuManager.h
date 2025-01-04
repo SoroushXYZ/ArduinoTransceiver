@@ -141,15 +141,49 @@ public:
         lcd->print(F("> Back"));
     }
 
-    void displaySelectDevice() {
-        lcd->clear();
-        lcd->setCursor(0, 0);
-        lcd->print(F("Select Device"));
-        lcd->setCursor(0, 1);
-        lcd->print(F("To be implemented"));
-        lcd->setCursor(0, 3);
-        lcd->print(F("> Back"));
+void displaySelectDevice() {
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print(F("Select Device"));  // Static title line
+
+    char typeBuffer[10];  // Buffer to hold the device type name
+
+    for (uint8_t i = 0; i < maxVisibleItems; i++) {
+        uint8_t optionIndex = scrollOffset + i;
+        lcd->setCursor(0, i + 1);
+        if (optionIndex == subMenuIndex) {
+            lcd->print(F("> "));
+        } else {
+            lcd->print(F("  "));
+        }
+
+        // Check if it's the last option for "Back"
+        if (optionIndex == numDeviceOptions) {
+            lcd->print(F("Back"));
+        } else if (optionIndex < numDeviceOptions) {
+            uint8_t number;
+            if (optionIndex < 4) {
+                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[0]);  // "Joystick"
+                number = optionIndex + 1;
+            } else if (optionIndex < 8) {
+                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[1]);  // "Analog"
+                number = optionIndex - 3;
+            } else if (optionIndex < 10) {
+                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[2]);  // "Switch"
+                number = optionIndex - 7;
+            } else if (optionIndex < 13) {
+                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[3]);  // "Digital"
+                number = optionIndex - 9;
+            } else {
+                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[4]);  // "Null" (fallback)
+                number = 0;
+            }
+
+            lcd->print(typeBuffer);  // Print type (e.g., "Joystick")
+            lcd->print(number);      // Print number (e.g., "1")
+        }
     }
+}
 
     void displayCalibrate() {
         lcd->clear();
@@ -171,21 +205,30 @@ public:
         lcd->print(F("> Back"));
     }
 
-    void updateEncoder(int8_t direction, bool buttonPressed) {
-        unsigned long currentTime = millis();
+void updateEncoder(int8_t direction, bool buttonPressed) {
+    unsigned long currentTime = millis();
 
-        if (menuLevel == CHANNEL_LIST) {
+    switch (menuLevel) {
+        case CHANNEL_LIST: {
             selectedIndex = (selectedIndex - direction + channelCount) % channelCount;
-            updateChannelValues();
-            updateChannelConfigs(selectedIndex);
 
             if (selectedIndex < scrollOffset) {
                 scrollOffset = selectedIndex;
-            } else if (selectedIndex >= scrollOffset + 4) {
-                scrollOffset = selectedIndex - 4 + 1;
+            } else if (selectedIndex >= scrollOffset + maxVisibleItems) {
+                scrollOffset = selectedIndex - maxVisibleItems + 1;
             }
-        } else if (menuLevel == CHANNEL_SETTINGS) {
-            uint8_t itemCount = channels[selectedIndex].getMenuOptionCount() + 1; // +1 for Back option
+
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+                menuLevel = CHANNEL_SETTINGS;  // Move to CHANNEL_SETTINGS
+                subMenuIndex = 0;
+                scrollOffset = 0;  // Reset to top
+            }
+            break;
+        }
+
+        case CHANNEL_SETTINGS: {
+            uint8_t itemCount = channels[selectedIndex].getMenuOptionCount() + 1;  // +1 for Back option
             subMenuIndex = (subMenuIndex - direction + itemCount) % itemCount;
 
             if (subMenuIndex < scrollOffset) {
@@ -193,31 +236,70 @@ public:
             } else if (subMenuIndex >= scrollOffset + maxVisibleItems) {
                 scrollOffset = subMenuIndex - maxVisibleItems + 1;
             }
+
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+
+                if (subMenuIndex == itemCount - 1) {
+                    // "Back" selected
+                    menuLevel = CHANNEL_LIST;
+                    subMenuIndex = 0;
+                    scrollOffset = selectedIndex - (selectedIndex % maxVisibleItems);  // Align with the selected index
+                } else if (channels[selectedIndex].configureItem(subMenuIndex) == SELECT_DEVICE) {
+                    menuLevel = SELECT_DEVICE;
+                    subMenuIndex = 0;  // Reset to start at Joystick1
+                    scrollOffset = 0;  // Reset scroll to the top
+                } else {
+                    menuLevel = channels[selectedIndex].configureItem(subMenuIndex);
+                }
+            }
+            break;
         }
 
-        if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
-            lastButtonPressTime = currentTime;
-
-            if (menuLevel == CHANNEL_LIST) {
-                menuLevel = CHANNEL_SETTINGS;
+        case READ_VALUE: {
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+                menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
                 subMenuIndex = 0;
                 scrollOffset = 0;
-            } else if (menuLevel == CHANNEL_SETTINGS) {
-                uint8_t itemCount = channels[selectedIndex].getMenuOptionCount();
-                if (subMenuIndex < itemCount) {
-                    menuLevel = channels[selectedIndex].configureItem(subMenuIndex);  // Transition to the appropriate submenu
-                } else {
-                    menuLevel = CHANNEL_LIST;  // Back button logic
-                    subMenuIndex = 0;
-                    scrollOffset = selectedIndex - (selectedIndex % maxVisibleItems); // Ensure the list scroll aligns
-                }
-            } else {
-                menuLevel = CHANNEL_SETTINGS; // Back to settings menu
             }
+            break;
         }
 
-        displayMenu();
+        case SELECT_DEVICE: {
+            uint8_t itemCount = numDeviceOptions + 1;  // +1 for Back option
+            subMenuIndex = (subMenuIndex - direction + itemCount) % itemCount;
+
+            if (subMenuIndex < scrollOffset) {
+                scrollOffset = subMenuIndex;
+            } else if (subMenuIndex >= scrollOffset + maxVisibleItems) {
+                scrollOffset = subMenuIndex - maxVisibleItems + 1;
+            }
+
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+
+                if (subMenuIndex == itemCount - 1) {
+                    // "Back" selected
+                    menuLevel = CHANNEL_SETTINGS;
+                    subMenuIndex = 0;
+                    scrollOffset = 0;
+                } else {
+                    Serial.print(F("Selected Device Option: "));
+                    Serial.println(subMenuIndex);
+                    // Handle the device selection here
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
     }
+
+    displayMenu();  // Refresh the display after every update
+}
+
 
     MenuLevel getMenuLevel() const {
         return menuLevel;
