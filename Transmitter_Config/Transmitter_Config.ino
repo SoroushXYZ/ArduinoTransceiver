@@ -30,18 +30,26 @@ int lastButtonState;
 unsigned long lastDebounceTime = 0;
 const unsigned long debounceDelay = 50;
 
-byte customChars[6][8] = {
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Empty block
-    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10}, // 20% full
-    {0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18}, // 40% full
-    {0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C}, // 60% full
-    {0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E, 0x1E}, // 80% full
-    {0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F}  // Full block
+// Custom characters stored in flash memory (PROGMEM)
+const byte customChars[8][8] PROGMEM = {
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},  // 0 - Empty block (0/5)
+    {0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10},  // 1 - 1/5 right-filled
+    {0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C, 0x1C},  // 2 - 3/5 right-filled
+    {0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F},  // 3 - Full block (5/5 right)
+    {0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01},  // 4 - 1/5 left-filled (mirrored)
+    {0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07},  // 5 - 3/5 left-filled (mirrored)
+    {0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F, 0x1F},  // 6 - 5/5 left-filled (mirrored)
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}   // 7 - Empty (placeholder)
 };
 
+// Load custom characters from PROGMEM to the LCD
 void setupCustomCharacters(LiquidCrystal_I2C &lcd) {
-    for (uint8_t i = 0; i < 6; i++) {
-        lcd.createChar(i, customChars[i]);
+    for (uint8_t i = 0; i < 8; i++) {
+        byte buffer[8];
+        for (uint8_t j = 0; j < 8; j++) {
+            buffer[j] = pgm_read_byte(&(customChars[i][j]));
+        }
+        lcd.createChar(i, buffer);
     }
 }
 
@@ -51,11 +59,11 @@ void setup() {
   Serial.println(F("Setup Complete?"));
 
   // Initialize channel names
-  channels[0].setName("Throttle");
-  channels[1].setName("Ailerons");
-  channels[2].setName("Elevator");
-  channels[3].setName("Rudder");
-  channels[4].setName("Flaps");
+  // channels[0].setName("Throttle");
+  // channels[1].setName("Ailerons");
+  // channels[2].setName("Elevator");
+  // channels[3].setName("Rudder");
+  // channels[4].setName("Flaps");
 
   // Initialize pins
   pinMode(CLK, INPUT);

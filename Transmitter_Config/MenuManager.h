@@ -88,16 +88,56 @@ public:
         }
     }
 
-    void displayReadValue() {
-        lcd->clear();
-        lcd->setCursor(0, 0);
-        lcd->print(F("Read Value:"));
-        lcd->setCursor(0, 1);
-        lcd->print(F("> "));
-        lcd->print(channels[selectedIndex].getValue());
-        lcd->setCursor(0, 3);
-        lcd->print(F("> Back"));
+void displayReadValue() {
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print(F("Read Value:"));
+
+    uint16_t value = channels[selectedIndex].getValue();  // Range: 0–255
+    int8_t relativeValue = value - 127;  // Centered around 127
+    int numBlocks = abs(relativeValue) / 25;  // Number of full blocks (0–5)
+    int partialBlockLevel = (abs(relativeValue) % 25);  // Partial block level (0–24)
+
+    lcd->setCursor(0, 1);
+    lcd->print(F("["));
+
+    for (int i = 0; i < 5; i++) {
+        if (relativeValue < 0) {
+            // Negative values - fill left side
+            int leftIndex = 4 - i;  // Fill from the rightmost of the left side
+            if (leftIndex < numBlocks) {
+                lcd->write(6);  // Full block (mirrored)
+            } else if (leftIndex == numBlocks) {
+                lcd->write((partialBlockLevel >= 12) ? 5 : 4);  // Partial block (mirrored)
+            } else {
+                lcd->write(0);  // Empty block
+            }
+        } else {
+            lcd->write(0);  // Empty block for unused left side
+        }
     }
+
+    for (int i = 5; i < 10; i++) {
+        if (relativeValue > 0) {
+            // Positive values - fill right side
+            int rightIndex = i - 5;  // Fill from the leftmost of the right side
+            if (rightIndex < numBlocks) {
+                lcd->write(3);  // Full block
+            } else if (rightIndex == numBlocks) {
+                lcd->write((partialBlockLevel >= 12) ? 2 : 1);  // Partial block
+            } else {
+                lcd->write(0);  // Empty block
+            }
+        } else {
+            lcd->write(0);  // Empty block for unused right side
+        }
+    }
+
+    lcd->print(F("]"));
+    lcd->setCursor(0, 3);
+    lcd->print(F("> Back"));
+}
+
 
     void displaySelectDevice() {
         lcd->clear();
