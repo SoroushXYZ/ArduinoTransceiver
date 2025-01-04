@@ -7,7 +7,7 @@
 const int MAX_CHANNELS = 10;
 const int CHANNEL_BLOCK_SIZE = 100;
 const int EEPROM_START_ADDRESS = 0;
-const uint8_t CONFIG_VERSION = 1; // Increment this when structure changes
+const uint8_t CONFIG_VERSION = 2; // Increment this when structure changes
 
 // Device types
 enum DeviceType : uint8_t {
@@ -39,12 +39,12 @@ struct ChannelConfig {
     char deviceType;       // Device type ('J', 'A', 'S', 'D')
     uint8_t deviceId;      // Device ID
     bool reverse;          // Channel reversing
-    int trim;              // Trim adjustment
+    uint8_t trim;              // Trim adjustment
     int analogReadMin;     // Minimum analog read value
     int analogReadMax;     // Maximum analog read value
-    int minEndpoint;       // Minimum endpoint
-    int maxEndpoint;       // Maximum endpoint
-    int centerPoint;       // Center point adjustment
+    uint8_t minEndpoint;       // Minimum endpoint
+    uint8_t maxEndpoint;       // Maximum endpoint
+    uint8_t centerPoint;       // Center point adjustment
 };
 
 // InputHandler Class
