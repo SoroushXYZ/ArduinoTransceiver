@@ -33,6 +33,15 @@ private:
         Serial.write((uint8_t*)channelValues, sizeof(ChannelValues));
     }
 
+    // Send channel configuration over serial
+    void sendChannelConfig(int channelIndex) {
+        if (channelIndex >= 0 && channelIndex < 10) {
+            Serial.write((uint8_t*)&inputHandler.channels[channelIndex], sizeof(ChannelConfig));
+        } else {
+            Serial.println(F("Invalid channel index"));
+        }
+    }
+
     // Send channel updates over the radio
     void sendRadioUpdates() {
         if (radio) {
@@ -45,6 +54,10 @@ private:
         if (command == "X") {
             updateInputs();     // Update the channel values
             sendSerialUpdates(); // Send data over Serial
+        } else if (command.startsWith("C")) {
+            // Parse the channel index, e.g., "C0", "C5"
+            int channelIndex = command.substring(1).toInt();
+            sendChannelConfig(channelIndex); // Send the corresponding channel configuration
         }
         // Add more commands as needed here
     }
