@@ -3,11 +3,27 @@
 
 #include <Arduino.h>
 
+// Device type labels stored in PROGMEM
+const char deviceType_J[] PROGMEM = "Joystick";
+const char deviceType_A[] PROGMEM = "Analog";
+const char deviceType_S[] PROGMEM = "Switch";
+const char deviceType_D[] PROGMEM = "Digital";
+const char deviceType_N[] PROGMEM = "Null";
+
+// Lookup table for device types
+const char* const deviceTypeNames[] PROGMEM = {
+    deviceType_J,  // 'J'
+    deviceType_A,  // 'A'
+    deviceType_S,  // 'S'
+    deviceType_D,  // 'D'
+    deviceType_N   // 'N'
+};
+
 // Menu option labels stored in PROGMEM to save RAM
 const char menuOption1[] PROGMEM = "Value:";
 const char menuOption2[] PROGMEM = "Reverse:";
 const char menuOption3[] PROGMEM = "Trim:";
-const char menuOption4[] PROGMEM = "Device";
+const char menuOption4[] PROGMEM = "Device:";
 const char menuOption5[] PROGMEM = "Calibrate";
 
 const char* const menuOptions[] PROGMEM = {
@@ -42,6 +58,17 @@ public:
     uint16_t getValue() const { return value; }
     void setValue(uint16_t newValue) { value = newValue; }
 
+    // Get the device type name from PROGMEM
+    const char* getDeviceTypeName() const {
+        switch (deviceType) {
+            case 'J': return deviceType_J;
+            case 'A': return deviceType_A;
+            case 'S': return deviceType_S;
+            case 'D': return deviceType_D;
+            default:  return deviceType_N;
+        }
+    }
+
     void getMenuOption(uint8_t index, char* buffer, size_t bufferSize) const {
         if (index >= sizeof(menuOptions) / sizeof(menuOptions[0])) {
             strncpy(buffer, "Invalid", bufferSize);
@@ -66,7 +93,10 @@ public:
                 break;
 
             case 3:  // "Device"
-                snprintf(buffer, bufferSize, "%s", optionLabel);  // Static text, no extra value
+                char deviceTypeBuffer[16];  // Temporary buffer in RAM for the device type
+                strncpy_P(deviceTypeBuffer, getDeviceTypeName(), sizeof(deviceTypeBuffer) - 1);
+                deviceTypeBuffer[sizeof(deviceTypeBuffer) - 1] = '\0';  // Null-terminate
+                snprintf(buffer, bufferSize, "%s %s%d", optionLabel, deviceTypeBuffer, deviceId);
                 break;
 
             case 4:  // "Calibrate"
