@@ -5,12 +5,6 @@
 #include <LiquidCrystal_I2C.h>
 #include "Channel.h"
 
-// Enum for Menu Levels
-enum MenuLevel {
-    CHANNEL_LIST,
-    CHANNEL_SETTINGS
-};
-
 class MenuManager {
 private:
     LiquidCrystal_I2C* lcd;
@@ -23,76 +17,133 @@ private:
     unsigned long lastButtonPressTime; // Track the last button press time
     static const unsigned long buttonTimeout = 500; // Timeout for button press in ms
 
-    static const uint8_t maxVisibleItems = 3; // Number of lines for the scroll menu
+    static const uint8_t maxVisibleItems = 3; // Number of scrollable lines (excluding the title line)
 
 public:
     MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, uint8_t count)
         : lcd(lcd), channels(channels), channelCount(count), selectedIndex(0),
           menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0), lastButtonPressTime(0) {}
 
-void displayMenu() {
-    lcd->clear();
+    void displayMenu() {
+        lcd->clear();
 
-    if (menuLevel == CHANNEL_LIST) {
-        // Display channel list
+        switch (menuLevel) {
+            case CHANNEL_LIST:
+                displayChannelList();
+                break;
+            case CHANNEL_SETTINGS:
+                displayChannelSettings();
+                break;
+            case READ_VALUE:
+                displayReadValue();
+                break;
+            case SELECT_DEVICE:
+                displaySelectDevice();
+                break;
+            case CALIBRATE:
+                displayCalibrate();
+                break;
+            case TRIM:
+                displayTrim();
+                break;
+        }
+    }
+
+    void displayChannelList() {
         for (uint8_t i = 0; i < 4; i++) {
             uint8_t channelIndex = scrollOffset + i;
             if (channelIndex >= channelCount) break;
 
             lcd->setCursor(0, i);
-
-            // Display cursor for the selected channel
             lcd->print(channelIndex == selectedIndex ? F("> ") : F("  "));
-
-            // Display the channel name
             lcd->print(channels[channelIndex].getName());
         }
-    } else if (menuLevel == CHANNEL_SETTINGS) {
-        // Display channel name on top
-        lcd->setCursor(0, 0);
-        lcd->print(channels[selectedIndex].getName());
+    }
 
-        // Display scrollable settings menu
+    void displayChannelSettings() {
+        lcd->setCursor(0, 0);
+        lcd->print(F("Channel: "));
+        lcd->print(channels[selectedIndex].getName());  // Display channel name on the first line
+
         char buffer[16];
+        uint8_t itemCount = channels[selectedIndex].getMenuOptionCount() + 1; // +1 for the Back option
+
+        // Display the scrollable menu options on lines 1 to 3
         for (uint8_t i = 0; i < maxVisibleItems; i++) {
             uint8_t itemIndex = scrollOffset + i;
-            lcd->setCursor(0, i + 1);
-            lcd->print(itemIndex == subMenuIndex ? F("> ") : F("  "));
+            lcd->setCursor(0, i + 1);  // Start at the second line (i + 1)
 
-            if (itemIndex < channels[selectedIndex].getConfigurableItemCount()) {
-                channels[selectedIndex].getConfigurableItem(itemIndex, buffer, sizeof(buffer));
+            if (itemIndex == subMenuIndex) {
+                lcd->print(F("> "));
+            } else {
+                lcd->print(F("  "));
+            }
+
+            if (itemIndex < itemCount - 1) {
+                channels[selectedIndex].getMenuOption(itemIndex, buffer, sizeof(buffer));
                 lcd->print(buffer);
-            } else if (itemIndex == channels[selectedIndex].getConfigurableItemCount()) {
-                lcd->print(F("Reset to Default"));
             } else {
                 lcd->print(F("Back"));
             }
         }
     }
-}
 
+    void displayReadValue() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Read Value:"));
+        lcd->setCursor(0, 1);
+        lcd->print(F("> "));
+        lcd->print(channels[selectedIndex].getValue());
+        lcd->setCursor(0, 3);
+        lcd->print(F("> Back"));
+    }
 
+    void displaySelectDevice() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Select Device"));
+        lcd->setCursor(0, 1);
+        lcd->print(F("To be implemented"));
+        lcd->setCursor(0, 3);
+        lcd->print(F("> Back"));
+    }
 
+    void displayCalibrate() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Calibrate:"));
+        lcd->setCursor(0, 1);
+        lcd->print(F("Calibrating..."));
+        lcd->setCursor(0, 3);
+        lcd->print(F("> Back"));
+    }
+
+    void displayTrim() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Trim Adjust:"));
+        lcd->setCursor(0, 1);
+        lcd->print(F("To be adjusted"));
+        lcd->setCursor(0, 3);
+        lcd->print(F("> Back"));
+    }
 
     void updateEncoder(int8_t direction, bool buttonPressed) {
         unsigned long currentTime = millis();
 
         if (menuLevel == CHANNEL_LIST) {
-            // Navigate channels (reverse scroll direction)
             selectedIndex = (selectedIndex - direction + channelCount) % channelCount;
 
-            // Update scroll offset
             if (selectedIndex < scrollOffset) {
                 scrollOffset = selectedIndex;
             } else if (selectedIndex >= scrollOffset + 4) {
                 scrollOffset = selectedIndex - 4 + 1;
             }
         } else if (menuLevel == CHANNEL_SETTINGS) {
-            // Navigate settings (reverse scroll direction)
-            uint8_t itemCount = channels[selectedIndex].getConfigurableItemCount() + 2; // Add Reset and Back
+            uint8_t itemCount = channels[selectedIndex].getMenuOptionCount() + 1; // +1 for Back option
             subMenuIndex = (subMenuIndex - direction + itemCount) % itemCount;
 
-            // Update scroll offset
             if (subMenuIndex < scrollOffset) {
                 scrollOffset = subMenuIndex;
             } else if (subMenuIndex >= scrollOffset + maxVisibleItems) {
@@ -101,24 +152,23 @@ void displayMenu() {
         }
 
         if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
-            lastButtonPressTime = currentTime; // Update the last button press time
+            lastButtonPressTime = currentTime;
 
             if (menuLevel == CHANNEL_LIST) {
-                menuLevel = CHANNEL_SETTINGS; // Enter settings
+                menuLevel = CHANNEL_SETTINGS;
                 subMenuIndex = 0;
                 scrollOffset = 0;
             } else if (menuLevel == CHANNEL_SETTINGS) {
-                uint8_t itemCount = channels[selectedIndex].getConfigurableItemCount();
+                uint8_t itemCount = channels[selectedIndex].getMenuOptionCount();
                 if (subMenuIndex < itemCount) {
-                    channels[selectedIndex].configureItem(subMenuIndex);
-                } else if (subMenuIndex == itemCount) {
-                    channels[selectedIndex].resetToDefault();
+                    menuLevel = channels[selectedIndex].configureItem(subMenuIndex);  // Transition to the appropriate submenu
                 } else {
-                    // Back button logic: transition to CHANNEL_LIST
-                    menuLevel = CHANNEL_LIST;
+                    menuLevel = CHANNEL_LIST;  // Back button logic
                     subMenuIndex = 0;
-                    scrollOffset = selectedIndex - (selectedIndex % 4); // Ensure the list scroll aligns
+                    scrollOffset = selectedIndex - (selectedIndex % maxVisibleItems); // Ensure the list scroll aligns
                 }
+            } else {
+                menuLevel = CHANNEL_SETTINGS; // Back to settings menu
             }
         }
 

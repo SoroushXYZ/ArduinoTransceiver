@@ -13,8 +13,8 @@ private:
     uint16_t maxEndpoint;    // Maximum endpoint
     uint16_t centerPoint;    // Center point adjustment
 
-    // Configurable items stored in PROGMEM to save RAM
-    static const char configurableItems[5][16] PROGMEM;
+    // Menu options stored in PROGMEM to save RAM
+    static const char menuOptions[5][16] PROGMEM;
 
 public:
     Channel(int number)
@@ -32,24 +32,27 @@ public:
     uint16_t getValue() const { return value; }
     void setValue(uint16_t newValue) { value = newValue; }
 
-    void getConfigurableItem(uint8_t index, char* buffer, size_t bufferSize) const {
+    void getMenuOption(uint8_t index, char* buffer, size_t bufferSize) const {
         if (index < 5) {
-            strncpy_P(buffer, configurableItems[index], bufferSize - 1);
+            strncpy_P(buffer, menuOptions[index], bufferSize - 1);
             buffer[bufferSize - 1] = '\0'; // Ensure null-termination
         }
     }
 
-    uint8_t getConfigurableItemCount() const {
-        return sizeof(configurableItems) / sizeof(configurableItems[0]);
+    uint8_t getMenuOptionCount() const {
+        return sizeof(menuOptions) / sizeof(menuOptions[0]);
     }
 
-    void configureItem(uint8_t itemIndex) {
+    MenuLevel configureItem(uint8_t itemIndex) {
         switch (itemIndex) {
-            case 0: reverse = !reverse; break; // Toggle reverse
-            case 1: trim = 0; break;          // Reset trim
-            case 2: minEndpoint = 1000; break; // Reset endpoints
-            case 3: maxEndpoint = 2000; break;
-            case 4: centerPoint = 1500; break; // Reset center point
+            case 0: return READ_VALUE;     // Show current value
+            case 1: return SELECT_DEVICE;  // Go to device selection menu
+            case 2: return CALIBRATE;      // Calibration process
+            case 3: reverse = !reverse;    // Toggle reverse
+                    return CHANNEL_SETTINGS;  // Stay in settings
+            case 4: trim = 0;              // Reset trim
+                    return TRIM;           // Go to trim adjustment menu
+            default: return CHANNEL_SETTINGS; // Default fallback
         }
     }
 
@@ -62,9 +65,9 @@ public:
     }
 };
 
-// Definition of configurable items in PROGMEM
-const char Channel::configurableItems[5][16] PROGMEM = {
-    "Reverse", "Trim", "Min Endpoint", "Max Endpoint", "Center Point"
+// Definition of menu options in PROGMEM
+const char Channel::menuOptions[5][16] PROGMEM = {
+    "Read Value", "Select Device", "Calibrate", "Reverse", "Trim"
 };
 
 #endif

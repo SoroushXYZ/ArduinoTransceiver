@@ -1,9 +1,10 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include "Definitions.h"
 #include "Channel.h"
 #include "CommunicationMaster.h"
 #include "MenuManager.h"
-// #include "TimedUpdateHandler.h"
+#include "TimedUpdateHandler.h"
 
 // Rotary Encoder Pins
 #define CLK 11
@@ -77,7 +78,7 @@ void setup() {
 
 void loop() {
   handleEncoder();
-  // handleTimedUpdates(menu);
+  handleTimedUpdates(menu);
 }
 
 void handleEncoder() {
