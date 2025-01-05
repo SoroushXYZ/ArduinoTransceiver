@@ -1,3 +1,4 @@
+#include "HardwareSerial.h"
 #ifndef COMMUNICATION_HANDLER_H
 #define COMMUNICATION_HANDLER_H
 
@@ -58,6 +59,59 @@ private:
             // Parse the channel index, e.g., "C0", "C5"
             int channelIndex = command.substring(1).toInt();
             sendChannelConfig(channelIndex); // Send the corresponding channel configuration
+        } else if (command.startsWith("D")) {
+            // Handle the "D<channel index>=<deviceIndex>" format
+            int equalIndex = command.indexOf('=');
+            if (equalIndex != -1) {
+                int channelIndex = command.substring(1, equalIndex).toInt();
+                int deviceIndex = command.substring(equalIndex + 1).toInt();  // Extract the deviceIndex after '='
+
+                if (channelIndex >= 0 && channelIndex < 10) {
+                    // Apply the received deviceIndex to the corresponding channel
+                    inputHandler.channels[channelIndex].deviceType = predefinedDevices[deviceIndex].type;
+                    inputHandler.channels[channelIndex].deviceId = predefinedDevices[deviceIndex].id;
+
+                    inputHandler.saveToEEPROM();
+                    loadChannels();
+
+                    Serial.print(F("Device updated for channel "));
+                    Serial.print(channelIndex + 1);
+                    Serial.print((". Now, connected to "));
+                    Serial.print(inputHandler.channels[deviceIndex].deviceType);
+                    Serial.println(inputHandler.channels[deviceIndex].deviceId);
+                } else {
+                    Serial.println(F("Invalid channel index"));
+                }
+            } else {
+                Serial.println(F("Invalid format for D command"));
+            }
+        }  else if (command.startsWith("I")) {
+            // Handle the "I<channel index>" format
+            int channelIndex = command.substring(1).toInt();
+            if (channelIndex >= 0 && channelIndex < 10) {
+                Serial.println(inputHandler.channels[channelIndex].reverse);
+            } else {
+                Serial.println(F("Invalid channel index for I command"));
+            }
+        } else if (command.startsWith("R")) {
+            // Handle the "R<channel index>" format to reverse the channel
+            int channelIndex = command.substring(1).toInt();
+            if (channelIndex >= 0 && channelIndex < 10) {
+                bool isReversed = inputHandler.channels[channelIndex].reverse;  // Check if channel is already reversed
+                inputHandler.channels[channelIndex].reverse = !isReversed;        // Toggle the reverse state
+                
+                inputHandler.saveToEEPROM();
+                loadChannels();
+                
+                Serial.print(F("Channel "));
+                Serial.print(channelIndex);
+                Serial.print(F(" reversed: "));
+                Serial.println(isReversed ? F("false") : F("true"));
+            } else {
+                Serial.println(F("Invalid channel index for R command"));
+            }
+        } else {
+            Serial.println(F("Unknown command"));
         }
         // Add more commands as needed here
     }
