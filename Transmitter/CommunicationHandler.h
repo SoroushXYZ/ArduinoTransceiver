@@ -74,7 +74,7 @@ private:
                     inputHandler.saveToEEPROM();
                     loadChannels();
 
-                    Serial.print(F("Y"));
+                    Serial.println(F("Y"));
                 } else {
                     Serial.println(F("N"));
                 }
@@ -98,16 +98,13 @@ private:
                 
                 inputHandler.saveToEEPROM();
                 loadChannels();
-                
-                Serial.print(F("Channel "));
-                Serial.print(channelIndex);
-                Serial.print(F(" reversed: "));
-                Serial.println(isReversed ? F("false") : F("true"));
+
+                Serial.println(F("Y"));
             } else {
-                Serial.println(F("Invalid channel index for R command"));
+                Serial.println(F("N"));
             }
         } else {
-            Serial.println(F("Unknown command"));
+            Serial.println(F("N"));
         }
         // Add more commands as needed here
     }
