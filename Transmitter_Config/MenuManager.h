@@ -37,6 +37,9 @@ public:
             case READ_VALUE:
                 displayReadValue();
                 break;
+            case REVERSE:
+                displayReverse();
+                break;
             case SELECT_DEVICE:
                 displaySelectDevice();
                 break;
@@ -141,49 +144,73 @@ public:
         lcd->print(F("> Back"));
     }
 
-void displaySelectDevice() {
-    lcd->clear();
-    lcd->setCursor(0, 0);
-    lcd->print(F("Select Device"));  // Static title line
+    void displayReverse() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        
+        // Display the title "Reverse <channel name>"
+        lcd->print(F("Reverse "));
+        lcd->print(channels[selectedIndex].getName());
 
-    char typeBuffer[16];  // Buffer to hold the device type name
+        // Options: "True", "False", "Back"
+        const char* options[] = {"True", "False", "Back"};
+        uint8_t optionCount = 3;  // Number of options
 
-    for (uint8_t i = 0; i < maxVisibleItems; i++) {
-        uint8_t optionIndex = scrollOffset + i;
-        lcd->setCursor(0, i + 1);
-        if (optionIndex == subMenuIndex) {
-            lcd->print(F("> "));
-        } else {
-            lcd->print(F("  "));
-        }
-
-        // Check if it's the last option for "Back"
-        if (optionIndex == numDeviceOptions) {
-            lcd->print(F("Back"));
-        } else if (optionIndex < numDeviceOptions) {
-            uint8_t number;
-            if (optionIndex < 4) {
-                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[0]);  // "Joystick"
-                number = optionIndex + 1;
-            } else if (optionIndex < 8) {
-                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[1]);  // "Analog"
-                number = optionIndex - 3;
-            } else if (optionIndex < 10) {
-                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[2]);  // "Switch"
-                number = optionIndex - 7;
-            } else if (optionIndex < 13) {
-                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[3]);  // "Digital"
-                number = optionIndex - 9;
+        // Display the scrollable options
+        for (uint8_t i = 0; i < optionCount; i++) {
+            lcd->setCursor(0, i + 1);  // Start at the second line (i + 1)
+            if (subMenuIndex == i) {
+                lcd->print(F("> "));  // Highlight the selected option
             } else {
-                strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[4]);  // "Null" (fallback)
-                number = 0;
+                lcd->print(F("  "));  // Indent unselected options
             }
-
-            lcd->print(typeBuffer);  // Print type (e.g., "Joystick")
-            lcd->print(number);      // Print number (e.g., "1")
+            lcd->print(options[i]);
         }
     }
-}
+
+    void displaySelectDevice() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Select Device"));  // Static title line
+
+        char typeBuffer[16];  // Buffer to hold the device type name
+
+        for (uint8_t i = 0; i < maxVisibleItems; i++) {
+            uint8_t optionIndex = scrollOffset + i;
+            lcd->setCursor(0, i + 1);
+            if (optionIndex == subMenuIndex) {
+                lcd->print(F("> "));
+            } else {
+                lcd->print(F("  "));
+            }
+
+            // Check if it's the last option for "Back"
+            if (optionIndex == numDeviceOptions) {
+                lcd->print(F("Back"));
+            } else if (optionIndex < numDeviceOptions) {
+                uint8_t number;
+                if (optionIndex < 4) {
+                    strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[0]);  // "Joystick"
+                    number = optionIndex + 1;
+                } else if (optionIndex < 8) {
+                    strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[1]);  // "Analog"
+                    number = optionIndex - 3;
+                } else if (optionIndex < 10) {
+                    strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[2]);  // "Switch"
+                    number = optionIndex - 7;
+                } else if (optionIndex < 13) {
+                    strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[3]);  // "Digital"
+                    number = optionIndex - 9;
+                } else {
+                    strcpy_P(typeBuffer, (PGM_P)deviceTypeNames[4]);  // "Null" (fallback)
+                    number = 0;
+                }
+
+                lcd->print(typeBuffer);  // Print type (e.g., "Joystick")
+                lcd->print(number);      // Print number (e.g., "1")
+            }
+        }
+    }
 
     void displayCalibrate() {
         lcd->clear();
@@ -262,6 +289,35 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
                 menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
+                loadChannelSettings(selectedIndex);
+                subMenuIndex = 0;
+                scrollOffset = 0;
+            }
+            break;
+        }
+
+        case REVERSE: {
+            uint8_t optionCount = 3;  // "True", "False", "Back"
+            subMenuIndex = (subMenuIndex - direction + optionCount) % optionCount;
+
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+
+                switch (subMenuIndex) {
+                    case 0:  // "True" selected
+                        if(!channels[selectedIndex].reverse){
+                          reverseChannel(selectedIndex);
+                        }
+                        break;
+
+                    case 1:  // "False" selected
+                        if(channels[selectedIndex].reverse){
+                          reverseChannel(selectedIndex);
+                        }
+                        break;
+                }
+                delay(100);
+                menuLevel = CHANNEL_SETTINGS;  // Go back to settings menu
                 loadChannelSettings(selectedIndex);
                 subMenuIndex = 0;
                 scrollOffset = 0;

@@ -116,8 +116,7 @@ public:
     MenuLevel configureItem(uint8_t itemIndex) {
         switch (itemIndex) {
             case 0: return READ_VALUE;     // Show current value
-            case 1: reverse = !reverse;    // Toggle reverse
-                    return CHANNEL_SETTINGS;  // Stay in settings
+            case 1: return REVERSE;        // Toggle reverse
             case 2: trim = 0;              // Reset trim
                     return TRIM;           // Go to trim adjustment menu
             case 3: return SELECT_DEVICE;  // Go to device selection menu

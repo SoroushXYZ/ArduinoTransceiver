@@ -3,6 +3,7 @@ enum MenuLevel {
     CHANNEL_LIST,
     CHANNEL_SETTINGS,
     READ_VALUE,
+    REVERSE,
     SELECT_DEVICE,
     CALIBRATE,
     TRIM,
