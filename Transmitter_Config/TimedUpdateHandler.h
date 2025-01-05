@@ -12,7 +12,7 @@ void handleTimedUpdates(MenuManager& menu) {
     unsigned long currentTime = millis();
 
     // Check if 100 ms have passed since the last update
-    if (currentTime - lastUpdateTime >= 100) {
+    if (currentTime - lastUpdateTime >= 200) {
         switch(menu.getMenuLevel()){
           case READ_VALUE:
               updateChannelValues();
@@ -27,9 +27,11 @@ void handleTimedUpdates(MenuManager& menu) {
           // case SELECT_DEVICE:
           //     displaySelectDevice();
           //     break;
-          // case CALIBRATE:
-          //     displayCalibrate();
-          //     break;
+          case CALIBRATE:
+              updateAnalogValue(menu.getSelectedIndex());
+              channels[menu.getSelectedIndex()].calibrationLoop();
+              menu.displayCalibrate();
+              break;
           // case TRIM:
           //     displayTrim();
           //     break;

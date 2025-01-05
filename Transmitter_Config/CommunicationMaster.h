@@ -35,6 +35,28 @@ void updateChannelValues() {
     }
 }
 
+void updateAnalogValue(int channelIndex){
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("A"));  // Send the request command "A"
+    Serial.println(channelIndex);  // Send the channel index
+
+    // Wait for 2 bytes of data (since analog values are 10 bits, packed into 2 bytes)
+    unsigned long startTime = millis();
+    while (Serial.available() < 2) {  // Expecting 2 bytes for `uint16_t`
+        if (millis() - startTime > 50) {
+            Serial.println(F("Timeout: No response"));
+            return;  // Exit the function if no data is received within 50ms
+        }
+    }
+
+    // Read the 2-byte analog value
+    int analogValue = -1;
+    Serial.readBytes((char*)&analogValue, 2);
+
+    // Update the channel value with the received analog value
+    channels[channelIndex].setAnalogValue(analogValue);
+}
+
 // Function to request a channel configuration
 void updateChannelConfigs(int channelIndex) {
     // Send request string, e.g., "C0" for channel 0

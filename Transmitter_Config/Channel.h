@@ -33,7 +33,8 @@ const char* const menuOptions[] PROGMEM = {
 class Channel {
 private:
     char name[10];           // Name of the channel (fixed-size buffer)
-    uint8_t value;          // Computed value of the channel (fits within 0-1023)
+    uint8_t value;          // Computed value of the channel (fits within 0-255)
+    int analogValue;          // Read analog value of the channel (fits within 0-1023)
 
 public:
     bool reverse;            // Channel reversing
@@ -55,8 +56,10 @@ public:
         name[sizeof(name) - 1] = '\0'; // Ensure null-termination
     }
 
-    uint16_t getValue() const { return value; }
+    uint8_t getValue() const { return value; }
     void setValue(uint16_t newValue) { value = newValue; }
+    int getAnalogValue() const { return analogValue; }
+    void setAnalogValue(int newValue) { analogValue = newValue; }
 
     // Get the device type name from PROGMEM
     const char* getDeviceTypeName() const {
@@ -113,6 +116,18 @@ public:
         return sizeof(menuOptions) / sizeof(menuOptions[0]);
     }
 
+    void startCalibration(){
+      minEndpoint = 1023;
+      maxEndpoint = 0;
+    }
+
+    void calibrationLoop(){
+      if(analogValue != -1){
+        if(minEndpoint > analogValue){ minEndpoint = analogValue; }
+        if(maxEndpoint < analogValue){ maxEndpoint = analogValue; }
+      }
+    }
+
     MenuLevel configureItem(uint8_t itemIndex) {
         switch (itemIndex) {
             case 0: return READ_VALUE;     // Show current value
@@ -120,7 +135,8 @@ public:
             case 2: trim = 0;              // Reset trim
                     return TRIM;           // Go to trim adjustment menu
             case 3: return SELECT_DEVICE;  // Go to device selection menu
-            case 4: return CALIBRATE;      // Calibration process
+            case 4: startCalibration();
+              return CALIBRATE;      // Calibration process
             default: return CHANNEL_SETTINGS; // Default fallback
         }
     }
