@@ -284,15 +284,19 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
 
                 if (subMenuIndex == itemCount - 1) {
                     // "Back" selected
-                    menuLevel = CHANNEL_SETTINGS;
                     loadChannelSettings(selectedIndex);
                     subMenuIndex = 0;
                     scrollOffset = 0;
                 } else {
-                    Serial.print(F("Selected Device Option: "));
-                    Serial.println(subMenuIndex);
+                    selectDevice(selectedIndex, subMenuIndex);
+                    loadChannelSettings(selectedIndex);
+                    subMenuIndex = 0;
+                    scrollOffset = 0;
+                    // Serial.print(F("Selected Device Option: "));
+                    // Serial.println(subMenuIndex);
                     // Handle the device selection here
                 }
+                menuLevel = CHANNEL_SETTINGS;
             }
             break;
         }

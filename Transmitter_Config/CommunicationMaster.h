@@ -67,3 +67,32 @@ void updateChannelConfigs(int channelIndex) {
 
 }
 
+void reverseChannel(int channelIndex) {
+    // Send the request key "R" followed by the channel index
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("R"));
+    Serial.println(channelIndex);
+}
+
+void selectDevice(int channelIndex, int deviceIndex) {
+    // Send the request key "D" followed by the channel index and device index
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("D"));
+    Serial.print(channelIndex);
+    Serial.print(F("="));
+    Serial.println(deviceIndex);
+
+    // Wait for the confirmation message
+    unsigned long startTime = millis();
+    while (!Serial.available()) {
+        if (millis() - startTime > 1000) {
+            Serial.println(F("Timeout: No response"));
+            return;
+        }
+    }
+
+    // Read the confirmation message to confirm the device change
+    while (Serial.available()) {
+        Serial.read();  // Discard any incoming data
+    }
+}

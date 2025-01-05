@@ -74,16 +74,12 @@ private:
                     inputHandler.saveToEEPROM();
                     loadChannels();
 
-                    Serial.print(F("Device updated for channel "));
-                    Serial.print(channelIndex + 1);
-                    Serial.print((". Now, connected to "));
-                    Serial.print(inputHandler.channels[deviceIndex].deviceType);
-                    Serial.println(inputHandler.channels[deviceIndex].deviceId);
+                    Serial.print(F("Y"));
                 } else {
-                    Serial.println(F("Invalid channel index"));
+                    Serial.println(F("N"));
                 }
             } else {
-                Serial.println(F("Invalid format for D command"));
+                Serial.println(F("N"));
             }
         }  else if (command.startsWith("I")) {
             // Handle the "I<channel index>" format
