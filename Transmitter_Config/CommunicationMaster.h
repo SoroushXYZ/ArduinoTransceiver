@@ -1,11 +1,19 @@
+#include "HardwareSerial.h"
 #include <avr/common.h>
 #include "Channel.h"
 
 // Assuming you have an array of 10 channels
 extern Channel channels[10];
 
+void clearSerialBuffer() {
+    while (Serial.available() > 0) {
+        Serial.read();  // Discard any incoming data
+    }
+}
+
 void updateChannelValues() {
     // Send the request key "X" to the slave Arduino
+    clearSerialBuffer();  // Clear any previous data in the buffer
     Serial.println(F("X"));
 
     // Wait for all 10 bytes of data to arrive
@@ -30,6 +38,7 @@ void updateChannelValues() {
 // Function to request a channel configuration
 void updateChannelConfigs(int channelIndex) {
     // Send request string, e.g., "C0" for channel 0
+    clearSerialBuffer();  // Clear any previous data in the buffer
     Serial.print(F("C"));
     Serial.println(channelIndex);
 
@@ -57,3 +66,4 @@ void updateChannelConfigs(int channelIndex) {
     channels[channelIndex].deviceId = config.deviceId;
 
 }
+

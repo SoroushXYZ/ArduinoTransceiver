@@ -59,11 +59,11 @@ void setup() {
   Serial.println(F("Setup Complete?"));
 
   // Initialize channel names
-  // channels[0].setName("Throttle");
-  // channels[1].setName("Ailerons");
-  // channels[2].setName("Elevator");
-  // channels[3].setName("Rudder");
-  // channels[4].setName("Flaps");
+  channels[0].setName("Throttle");
+  channels[1].setName("Ailerons");
+  channels[2].setName("Elevator");
+  channels[3].setName("Rudder");
+  channels[4].setName("Flaps");
 
   // Initialize pins
   pinMode(CLK, INPUT);

@@ -65,7 +65,7 @@ public:
         lcd->print(F("Channel: "));
         lcd->print(channels[selectedIndex].getName());  // Display channel name on the first line
 
-        char buffer[16];
+        char buffer[20];
         uint8_t itemCount = channels[selectedIndex].getMenuOptionCount() + 1; // +1 for the Back option
 
         // Display the scrollable menu options on lines 1 to 3
@@ -146,7 +146,7 @@ void displaySelectDevice() {
     lcd->setCursor(0, 0);
     lcd->print(F("Select Device"));  // Static title line
 
-    char typeBuffer[10];  // Buffer to hold the device type name
+    char typeBuffer[16];  // Buffer to hold the device type name
 
     for (uint8_t i = 0; i < maxVisibleItems; i++) {
         uint8_t optionIndex = scrollOffset + i;
@@ -221,6 +221,7 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
                 menuLevel = CHANNEL_SETTINGS;  // Move to CHANNEL_SETTINGS
+                loadChannelSettings(selectedIndex);
                 subMenuIndex = 0;
                 scrollOffset = 0;  // Reset to top
             }
@@ -243,6 +244,7 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
                 if (subMenuIndex == itemCount - 1) {
                     // "Back" selected
                     menuLevel = CHANNEL_LIST;
+                    loadChannelSettings(selectedIndex);
                     subMenuIndex = 0;
                     scrollOffset = selectedIndex - (selectedIndex % maxVisibleItems);  // Align with the selected index
                 } else if (channels[selectedIndex].configureItem(subMenuIndex) == SELECT_DEVICE) {
@@ -260,6 +262,7 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
                 menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
+                loadChannelSettings(selectedIndex);
                 subMenuIndex = 0;
                 scrollOffset = 0;
             }
@@ -282,6 +285,7 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
                 if (subMenuIndex == itemCount - 1) {
                     // "Back" selected
                     menuLevel = CHANNEL_SETTINGS;
+                    loadChannelSettings(selectedIndex);
                     subMenuIndex = 0;
                     scrollOffset = 0;
                 } else {
@@ -303,6 +307,11 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
 
     MenuLevel getMenuLevel() const {
         return menuLevel;
+    }
+
+    loadChannelSettings(int channelIndex){
+      updateChannelValues();
+      updateChannelConfigs(channelIndex);
     }
 };
 
