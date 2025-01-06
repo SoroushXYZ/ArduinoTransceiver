@@ -82,6 +82,13 @@ public:
         reverse = r;
     }
 
+    setAnalogReadMin(int min) {
+        analogReadMin = min;
+    }
+    setAnalogReadMax(int max) {
+        analogReadMax = max;
+    }
+
     void resetToDefault() {
         // Default reset functionality (optional)
     }

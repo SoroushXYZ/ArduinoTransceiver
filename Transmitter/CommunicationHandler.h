@@ -109,7 +109,34 @@ private:
             } else {
                 Serial.println(F("N"));
             }
-        } else {
+        } else if (command.startsWith("Z")) {
+            // Format: "Z<channelNumber>,<analogReadMin>,<analogReadMax>"
+            int firstComma = command.indexOf(',');
+            int secondComma = command.indexOf(',', firstComma + 1);
+
+            if (firstComma != -1 && secondComma != -1) {
+                int channelIndex = command.substring(1, firstComma).toInt();  // Extract channel number
+                uint16_t analogReadMin = command.substring(firstComma + 1, secondComma).toInt();  // Extract min endpoint
+                uint16_t analogReadMax = command.substring(secondComma + 1).toInt();  // Extract max endpoint
+
+                // Validate the channel index
+                if (channelIndex >= 0 && channelIndex < 10) {
+                    // Apply calibration data to the specified channel
+                    inputHandler.channels[channelIndex].analogReadMin = analogReadMin;
+                    inputHandler.channels[channelIndex].analogReadMax = analogReadMax;
+
+                    // Optionally save to EEPROM and reload
+                    inputHandler.saveToEEPROM();
+                    loadChannels();
+
+                    Serial.println(F("Y"));  // Acknowledge successful update
+                } else {
+                    Serial.println(F("N"));
+                }
+            } else {
+                Serial.println(F("N"));
+            }
+        }else {
             Serial.println(F("N"));
         }
         // Add more commands as needed here
