@@ -132,3 +132,29 @@ void selectDevice(int channelIndex, int deviceIndex) {
         Serial.read();  // Discard any incoming data
     }
 }
+
+void sendCalibrationData(int selectedIndex){
+    // Send the request key "Z" followed by the channel index and endpoints
+    delay(100);
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("Z"));
+    Serial.print(selectedIndex);
+    Serial.print(F(","));
+    Serial.print(channels[selectedIndex].analogReadMin);
+    Serial.print(F(","));
+    Serial.println(channels[selectedIndex].analogReadMax);
+
+    // Wait for the confirmation message
+    unsigned long startTime = millis();
+    while (!Serial.available()) {
+        if (millis() - startTime > 1000) {
+            Serial.println(F("Timeout: No response"));
+            return;
+        }
+    }
+
+    // Read the confirmation message to confirm the device change
+    while (Serial.available()) {
+        Serial.read();  // Discard any incoming data
+    }
+}

@@ -39,14 +39,14 @@ private:
 public:
     bool reverse;            // Channel reversing
     int16_t trim;            // Trim adjustment (int16_t to minimize memory usage)
-    uint16_t minEndpoint;    // Minimum endpoint
-    uint16_t maxEndpoint;    // Maximum endpoint
+    uint16_t analogReadMin;    // Minimum endpoint
+    uint16_t analogReadMax;    // Maximum endpoint
     char deviceType;       // Device type ('J', 'A', 'S', 'D', 'N')
     uint8_t deviceId;      // Device ID
 
     Channel(int number)
         : value(0), reverse(false), trim(0),
-          minEndpoint(0), maxEndpoint(1023), deviceType('N'), deviceId(0){
+          analogReadMin(0), analogReadMax(1023), deviceType('N'), deviceId(0){
         snprintf(name, sizeof(name), "CH%d", number);
     }
 
@@ -117,14 +117,14 @@ public:
     }
 
     void startCalibration(){
-      minEndpoint = 1023;
-      maxEndpoint = 0;
+      analogReadMin = 1023;
+      analogReadMax = 0;
     }
 
     void calibrationLoop(){
       if(analogValue != -1){
-        if(minEndpoint > analogValue){ minEndpoint = analogValue; }
-        if(maxEndpoint < analogValue){ maxEndpoint = analogValue; }
+        if(analogReadMin > analogValue){ analogReadMin = analogValue; }
+        if(analogReadMax < analogValue){ analogReadMax = analogValue; }
       }
     }
 

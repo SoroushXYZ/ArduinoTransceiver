@@ -219,21 +219,21 @@ void displayCalibrate() {
     lcd->setCursor(0, 1);
 
     uint16_t analogValue = channels[selectedIndex].getAnalogValue();  // Current analog value
-    uint16_t minEndpoint = channels[selectedIndex].minEndpoint;  // Min endpoint
-    uint16_t maxEndpoint = channels[selectedIndex].maxEndpoint;  // Max endpoint
-    uint16_t mean = (minEndpoint + maxEndpoint) / 2;  // Zero point (mean)
+    uint16_t analogReadMin = channels[selectedIndex].analogReadMin;  // Min endpoint
+    uint16_t analogReadMax = channels[selectedIndex].analogReadMax;  // Max endpoint
+    uint16_t mean = (analogReadMin + analogReadMax) / 2;  // Zero point (mean)
 
     // Display endpoints and analog value
     lcd->print(F("Min:"));
-    lcd->print(minEndpoint);
+    lcd->print(analogReadMin);
     lcd->print(F(" Max:"));
-    lcd->print(maxEndpoint);
+    lcd->print(analogReadMax);
 
     // Clear line 3 for displaying the blocks
     lcd->setCursor(0, 2);
 
     // Calculate the number of blocks based on the analog value
-    int numBlocks = map(abs((int)analogValue - (int)mean), 0, (maxEndpoint - minEndpoint) / 2, 0, 10);
+    int numBlocks = map(abs((int)analogValue - (int)mean), 0, (analogReadMax - analogReadMin) / 2, 0, 10);
 
     for (int i = 0; i < 20; i++) {
         if (analogValue > mean && i >= 10 && i < 10 + numBlocks) {
@@ -373,6 +373,7 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
                     scrollOffset = 0;
                 } else {
                     selectDevice(selectedIndex, subMenuIndex);
+                    delay(100);
                     loadChannelSettings(selectedIndex);
                     subMenuIndex = 0;
                     scrollOffset = 0;
@@ -388,6 +389,8 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
         case CALIBRATE: {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
+                sendCalibrationData(selectedIndex);
+                delay(100);
                 menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
                 loadChannelSettings(selectedIndex);
                 subMenuIndex = 0;
