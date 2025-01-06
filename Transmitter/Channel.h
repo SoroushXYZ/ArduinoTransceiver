@@ -89,6 +89,13 @@ public:
         analogReadMax = max;
     }
 
+    getTrim() {
+        return trim;
+    }
+    setTrim(int t) {
+        trim = t;
+    }
+
     void resetToDefault() {
         // Default reset functionality (optional)
     }

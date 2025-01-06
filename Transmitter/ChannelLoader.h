@@ -45,5 +45,7 @@ void loadChannels(){
       // Set other properties from the config
       channels[i].setAnalogReadMin(config.analogReadMin);
       channels[i].setAnalogReadMax(config.analogReadMax);
+      channels[i].setTrim(config.trim);
+
     }
 }

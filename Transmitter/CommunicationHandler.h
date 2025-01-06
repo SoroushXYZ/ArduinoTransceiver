@@ -136,7 +136,30 @@ private:
             } else {
                 Serial.println(F("N"));
             }
-        }else {
+        } else if (command.startsWith("T")) {
+            // Format: "T<channelIndex>,<trimValue>"
+            int commaIndex = command.indexOf(',');
+            if (commaIndex != -1) {
+                int channelIndex = command.substring(1, commaIndex).toInt();  // Extract channel index
+                int8_t trimValue = command.substring(commaIndex + 1).toInt();  // Extract trim value
+
+                // Validate the channel index and trim value range
+                if (channelIndex >= 0 && channelIndex < 10 && trimValue >= -127 && trimValue <= 127) {
+                    // Set the trim value for the specified channel
+                    inputHandler.channels[channelIndex].trim = trimValue;
+
+                    // Optionally save to EEPROM and reload
+                    inputHandler.saveToEEPROM();
+                    loadChannels();
+
+                    Serial.println(F("Y"));  // Acknowledge successful update
+                } else {
+                    Serial.println(F("N"));  // Invalid channel index or trim value
+                }
+            } else {
+                Serial.println(F("N"));  // Invalid format
+            }
+        } else {
             Serial.println(F("N"));
         }
         // Add more commands as needed here

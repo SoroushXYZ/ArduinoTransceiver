@@ -39,7 +39,7 @@ struct ChannelConfig {
     char deviceType;       // Device type ('J', 'A', 'S', 'D')
     uint8_t deviceId;      // Device ID
     bool reverse;          // Channel reversing
-    uint8_t trim;              // Trim adjustment
+    int8_t trim;              // Trim adjustment
     int analogReadMin;     // Minimum analog read value
     int analogReadMax;     // Maximum analog read value
     uint8_t minEndpoint;       // Minimum endpoint
