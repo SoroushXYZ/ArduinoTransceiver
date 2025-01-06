@@ -158,3 +158,26 @@ void sendCalibrationData(int selectedIndex){
         Serial.read();  // Discard any incoming data
     }
 }
+
+void sendTrim(int selectedIndex) {
+    // Send the request key "T" followed by the channel index and trim value
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("T"));
+    Serial.print(selectedIndex);
+    Serial.print(F(","));
+    Serial.println(channels[selectedIndex].trim);
+
+    // Wait for the confirmation message
+    unsigned long startTime = millis();
+    while (!Serial.available()) {
+        if (millis() - startTime > 1000) {
+            Serial.println(F("Timeout: No response"));
+            return;
+        }
+    }
+
+    // Clear any remaining bytes in the serial buffer
+    while (Serial.available()) {
+        Serial.read();
+    }
+}

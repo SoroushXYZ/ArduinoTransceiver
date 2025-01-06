@@ -38,7 +38,7 @@ private:
 
 public:
     bool reverse;            // Channel reversing
-    int16_t trim;            // Trim adjustment (int16_t to minimize memory usage)
+    int8_t trim;            // Trim adjustment (int16_t to minimize memory usage)
     uint16_t analogReadMin;    // Minimum endpoint
     uint16_t analogReadMax;    // Maximum endpoint
     char deviceType;       // Device type ('J', 'A', 'S', 'D', 'N')
@@ -132,8 +132,7 @@ public:
         switch (itemIndex) {
             case 0: return READ_VALUE;     // Show current value
             case 1: return REVERSE;        // Toggle reverse
-            case 2: trim = 0;              // Reset trim
-                    return TRIM;           // Go to trim adjustment menu
+            case 2: return TRIM;           // Go to trim adjustment menu
             case 3: return SELECT_DEVICE;  // Go to device selection menu
             case 4: startCalibration();
               return CALIBRATE;      // Calibration process

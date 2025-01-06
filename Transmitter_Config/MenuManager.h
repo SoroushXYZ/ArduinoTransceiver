@@ -212,53 +212,60 @@ public:
         }
     }
 
-void displayCalibrate() {
-    lcd->clear();
-    lcd->setCursor(0, 0);
-    lcd->print(F("Calibrate:"));
-    lcd->setCursor(0, 1);
+    void displayCalibrate() {
+        lcd->clear();
+        lcd->setCursor(0, 0);
+        lcd->print(F("Calibrate:"));
+        lcd->setCursor(0, 1);
 
-    uint16_t analogValue = channels[selectedIndex].getAnalogValue();  // Current analog value
-    uint16_t analogReadMin = channels[selectedIndex].analogReadMin;  // Min endpoint
-    uint16_t analogReadMax = channels[selectedIndex].analogReadMax;  // Max endpoint
-    uint16_t mean = (analogReadMin + analogReadMax) / 2;  // Zero point (mean)
+        uint16_t analogValue = channels[selectedIndex].getAnalogValue();  // Current analog value
+        uint16_t analogReadMin = channels[selectedIndex].analogReadMin;  // Min endpoint
+        uint16_t analogReadMax = channels[selectedIndex].analogReadMax;  // Max endpoint
+        uint16_t mean = (analogReadMin + analogReadMax) / 2;  // Zero point (mean)
 
-    // Display endpoints and analog value
-    lcd->print(F("Min:"));
-    lcd->print(analogReadMin);
-    lcd->print(F(" Max:"));
-    lcd->print(analogReadMax);
+        // Display endpoints and analog value
+        lcd->print(F("Min:"));
+        lcd->print(analogReadMin);
+        lcd->print(F(" Max:"));
+        lcd->print(analogReadMax);
 
-    // Clear line 3 for displaying the blocks
-    lcd->setCursor(0, 2);
+        // Clear line 3 for displaying the blocks
+        lcd->setCursor(0, 2);
 
-    // Calculate the number of blocks based on the analog value
-    int numBlocks = map(abs((int)analogValue - (int)mean), 0, (analogReadMax - analogReadMin) / 2, 0, 10);
+        // Calculate the number of blocks based on the analog value
+        int numBlocks = map(abs((int)analogValue - (int)mean), 0, (analogReadMax - analogReadMin) / 2, 0, 10);
 
-    for (int i = 0; i < 20; i++) {
-        if (analogValue > mean && i >= 10 && i < 10 + numBlocks) {
-            lcd->write(3);  // Full block to the right
-        } else if (analogValue < mean && i < 10 && i >= 10 - numBlocks) {
-            lcd->write(3);  // Full block to the left
-        } else {
-            lcd->write(' ');  // Empty space
+        for (int i = 0; i < 20; i++) {
+            if (analogValue > mean && i >= 10 && i < 10 + numBlocks) {
+                lcd->write(3);  // Full block to the right
+            } else if (analogValue < mean && i < 10 && i >= 10 - numBlocks) {
+                lcd->write(3);  // Full block to the left
+            } else {
+                lcd->write(' ');  // Empty space
+            }
         }
+
+        lcd->setCursor(0, 3);
+        lcd->print(F("> Back"));
     }
-
-    lcd->setCursor(0, 3);
-    lcd->print(F("> Back"));
-}
-
 
     void displayTrim() {
         lcd->clear();
         lcd->setCursor(0, 0);
         lcd->print(F("Trim Adjust:"));
+
+        int8_t trimValue = channels[selectedIndex].trim;  // Current trim value (-127 to +127)
+
+        // Display trim value at the center for feedback
         lcd->setCursor(0, 1);
-        lcd->print(F("To be adjusted"));
+        lcd->print(F("Trim: "));
+        lcd->print(trimValue);
+
+        // Line 3: Add "Back" option
         lcd->setCursor(0, 3);
         lcd->print(F("> Back"));
     }
+
 
 void updateEncoder(int8_t direction, bool buttonPressed) {
     unsigned long currentTime = millis();
@@ -390,6 +397,25 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
                 sendCalibrationData(selectedIndex);
+                delay(100);
+                menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
+                loadChannelSettings(selectedIndex);
+                subMenuIndex = 0;
+                scrollOffset = 0;  // Reset scroll position
+            }
+            break;
+        }
+        case TRIM: {
+            // Increment or decrement the trim value
+            channels[selectedIndex].trim += direction;
+
+            // Clamp trim value between -127 and +127
+            if (channels[selectedIndex].trim > 127) channels[selectedIndex].trim = 127;
+            if (channels[selectedIndex].trim < -127) channels[selectedIndex].trim = -127;
+
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+                sendTrim(selectedIndex);
                 delay(100);
                 menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
                 loadChannelSettings(selectedIndex);
