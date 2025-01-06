@@ -55,6 +55,12 @@ private:
         if (command == "X") {
             updateInputs();     // Update the channel values
             sendSerialUpdates(); // Send data over Serial
+        } else if (command.startsWith("A")) {
+            // Parse the channel index, e.g., "C0", "C5"
+            int channelIndex = command.substring(1).toInt();
+            uint16_t analogValue = channels[channelIndex].getAnalogValue();  // Fixed semicolon
+            Serial.write((uint8_t*)&analogValue, sizeof(analogValue));  // Send the 2-byte value
+
         } else if (command.startsWith("C")) {
             // Parse the channel index, e.g., "C0", "C5"
             int channelIndex = command.substring(1).toInt();

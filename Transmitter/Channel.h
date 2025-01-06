@@ -86,6 +86,10 @@ public:
         // Default reset functionality (optional)
     }
 
+    uint16_t getAnalogValue() {
+        return ::analogRead(pin);
+    }
+
     int read() {
         int value = 0;
         switch (inputType) {
