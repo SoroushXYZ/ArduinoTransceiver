@@ -49,6 +49,9 @@ public:
             case TRIM:
                 displayTrim();
                 break;
+            case ENDPOINT:
+                displayEndpoint();
+                break;
         }
     }
 
@@ -266,6 +269,49 @@ public:
         lcd->print(F("> Back"));
     }
 
+    void displayEndpoint() {
+    lcd->clear();
+    lcd->setCursor(0, 0);
+    lcd->print(F("Endpoint Adjust:"));
+
+    // Get the min and max endpoint values
+    uint16_t minEndpoint = channels[selectedIndex].minEndpoint;
+    uint16_t maxEndpoint = channels[selectedIndex].maxEndpoint;
+
+    // Calculate the number of filled blocks (proportional to range)
+    int range = maxEndpoint - minEndpoint;
+    int blocksToFill = map(range, 0, 255, 0, 10);  // Map range to 10 blocks
+
+    // Calculate left and right empty blocks
+    int leftEmptyBlocks = (10 - blocksToFill) / 2;
+    int rightEmptyBlocks = 10 - blocksToFill - leftEmptyBlocks;
+
+    // Draw the progress bar
+    lcd->setCursor(0, 1);
+    lcd->print(F("["));
+
+    for (int i = 0; i < 10; i++) {
+        if (i < leftEmptyBlocks || i >= 10 - rightEmptyBlocks) {
+            lcd->write(0);  // Empty block
+        } else {
+            lcd->write(3);  // Full block
+        }
+    }
+
+    lcd->print(F("]"));
+
+    // Display the current range
+    lcd->setCursor(0, 2);
+    lcd->print(F("Min:"));
+    lcd->print(minEndpoint);
+    lcd->print(F(" Max:"));
+    lcd->print(maxEndpoint);
+
+    // Add "Back" option
+    lcd->setCursor(0, 3);
+    lcd->print(F("> Back"));
+}
+
 
 void updateEncoder(int8_t direction, bool buttonPressed) {
     unsigned long currentTime = millis();
@@ -416,6 +462,36 @@ void updateEncoder(int8_t direction, bool buttonPressed) {
             if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
                 lastButtonPressTime = currentTime;
                 sendTrim(selectedIndex);
+                delay(100);
+                menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
+                loadChannelSettings(selectedIndex);
+                subMenuIndex = 0;
+                scrollOffset = 0;  // Reset scroll position
+            }
+            break;
+        }
+        case ENDPOINT: {
+            // Adjust both endpoints simultaneously
+            if(channels[selectedIndex].minEndpoint + direction > 125){
+              return;
+            }
+            channels[selectedIndex].minEndpoint += direction;
+            channels[selectedIndex].maxEndpoint -= direction;
+
+            // Clamp min and max values between 0 and 255
+            if (channels[selectedIndex].minEndpoint < 0) channels[selectedIndex].minEndpoint = 0;
+            if (channels[selectedIndex].maxEndpoint > 255) channels[selectedIndex].maxEndpoint = 255;
+            if (channels[selectedIndex].minEndpoint >= channels[selectedIndex].maxEndpoint) {
+                channels[selectedIndex].maxEndpoint = channels[selectedIndex].maxEndpoint - 1;
+            }
+
+            // Refresh the display
+            displayMenu();
+
+            // Handle button press to go back to the settings menu
+            if (buttonPressed && (currentTime - lastButtonPressTime > buttonTimeout)) {
+                lastButtonPressTime = currentTime;
+                sendEndpoints(selectedIndex);
                 delay(100);
                 menuLevel = CHANNEL_SETTINGS;  // Go back to CHANNEL_SETTINGS
                 loadChannelSettings(selectedIndex);

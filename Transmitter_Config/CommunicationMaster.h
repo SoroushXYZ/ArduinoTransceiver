@@ -86,6 +86,8 @@ void updateChannelConfigs(int channelIndex) {
     channels[channelIndex].trim = config.trim;
     channels[channelIndex].deviceType = config.deviceType;
     channels[channelIndex].deviceId = config.deviceId;
+    channels[channelIndex].minEndpoint = config.minEndpoint;
+    channels[channelIndex].maxEndpoint = config.maxEndpoint;
 
 }
 
@@ -166,6 +168,29 @@ void sendTrim(int selectedIndex) {
     Serial.print(selectedIndex);
     Serial.print(F(","));
     Serial.println(channels[selectedIndex].trim);
+
+    // Wait for the confirmation message
+    unsigned long startTime = millis();
+    while (!Serial.available()) {
+        if (millis() - startTime > 1000) {
+            Serial.println(F("Timeout: No response"));
+            return;
+        }
+    }
+
+    // Clear any remaining bytes in the serial buffer
+    while (Serial.available()) {
+        Serial.read();
+    }
+}
+
+sendEndpoints(int selectedIndex){
+  // Send the request key "T" followed by the channel index and trim value
+    clearSerialBuffer();  // Clear any previous data in the buffer
+    Serial.print(F("E"));
+    Serial.print(selectedIndex);
+    Serial.print(F(","));
+    Serial.println(channels[selectedIndex].minEndpoint);
 
     // Wait for the confirmation message
     unsigned long startTime = millis();

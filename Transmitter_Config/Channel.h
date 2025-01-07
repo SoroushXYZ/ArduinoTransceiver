@@ -23,11 +23,12 @@ const char* const deviceTypeNames[] PROGMEM = {
 const char menuOption1[] PROGMEM = "Value:";
 const char menuOption2[] PROGMEM = "Reverse:";
 const char menuOption3[] PROGMEM = "Trim:";
-const char menuOption4[] PROGMEM = "Device:";
-const char menuOption5[] PROGMEM = "Calibrate";
+const char menuOption4[] PROGMEM = "Endpoint Range";
+const char menuOption5[] PROGMEM = "Device:";
+const char menuOption6[] PROGMEM = "Calibrate";
 
 const char* const menuOptions[] PROGMEM = {
-    menuOption1, menuOption2, menuOption3, menuOption4, menuOption5
+    menuOption1, menuOption2, menuOption3, menuOption4, menuOption5, menuOption6
 };
 
 class Channel {
@@ -39,8 +40,10 @@ private:
 public:
     bool reverse;            // Channel reversing
     int8_t trim;            // Trim adjustment (int16_t to minimize memory usage)
-    uint16_t analogReadMin;    // Minimum endpoint
-    uint16_t analogReadMax;    // Maximum endpoint
+    uint16_t analogReadMin;    // Minimum analog value
+    uint16_t analogReadMax;    // Maximum analog value
+    int16_t minEndpoint;    // Minimum applied endpoint
+    int16_t maxEndpoint;    // Maximum applied endpoint
     char deviceType;       // Device type ('J', 'A', 'S', 'D', 'N')
     uint8_t deviceId;      // Device ID
 
@@ -95,14 +98,18 @@ public:
                 snprintf(buffer, bufferSize, "%s %+d", optionLabel, trim);
                 break;
 
-            case 3:  // "Device"
+            case 3:  // "Endpoint"
+                snprintf(buffer, bufferSize, "%s", optionLabel);
+                break;
+
+            case 4:  // "Device"
                 char deviceTypeBuffer[16];  // Temporary buffer in RAM for the device type
                 strncpy_P(deviceTypeBuffer, getDeviceTypeName(), sizeof(deviceTypeBuffer) - 1);
                 deviceTypeBuffer[sizeof(deviceTypeBuffer) - 1] = '\0';  // Null-terminate
                 snprintf(buffer, bufferSize, "%s %s%d", optionLabel, deviceTypeBuffer, deviceId);
                 break;
 
-            case 4:  // "Calibrate"
+            case 5:  // "Calibrate"
                 snprintf(buffer, bufferSize, "%s", optionLabel);  // Static text, no extra value
                 break;
 
@@ -133,8 +140,9 @@ public:
             case 0: return READ_VALUE;     // Show current value
             case 1: return REVERSE;        // Toggle reverse
             case 2: return TRIM;           // Go to trim adjustment menu
-            case 3: return SELECT_DEVICE;  // Go to device selection menu
-            case 4: startCalibration();
+            case 3: return ENDPOINT;           // Go to trim adjustment menu
+            case 4: return SELECT_DEVICE;  // Go to device selection menu
+            case 5: startCalibration();
               return CALIBRATE;      // Calibration process
             default: return CHANNEL_SETTINGS; // Default fallback
         }

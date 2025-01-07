@@ -4,9 +4,10 @@ enum MenuLevel {
     CHANNEL_SETTINGS,
     READ_VALUE,
     REVERSE,
+    TRIM,
+    ENDPOINT,
     SELECT_DEVICE,
     CALIBRATE,
-    TRIM,
 };
 
 // Channel configuration structure
