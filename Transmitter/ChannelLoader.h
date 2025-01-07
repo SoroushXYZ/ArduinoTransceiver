@@ -46,6 +46,7 @@ void loadChannels(){
       channels[i].setAnalogReadMin(config.analogReadMin);
       channels[i].setAnalogReadMax(config.analogReadMax);
       channels[i].setTrim(config.trim);
+      channels[i].setTrim(config.trim);
 
     }
 }

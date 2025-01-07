@@ -95,6 +95,13 @@ public:
     setTrim(int t) {
         trim = t;
     }
+    
+    setMinEndpoint(int min) {
+        minEndpoint = min;
+    }
+    setMaxEndpoint(int max) {
+        maxEndpoint = max;
+    }
 
     void resetToDefault() {
         // Default reset functionality (optional)
@@ -130,7 +137,7 @@ public:
             value = maxEndpoint - value;
         }
 
-        value = constrain(value + trim, minEndpoint, maxEndpoint);
+        value = constrain(value + trim, 0, 255);
         return value;
     }
 

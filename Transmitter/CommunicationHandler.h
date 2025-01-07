@@ -159,6 +159,24 @@ private:
             } else {
                 Serial.println(F("N"));  // Invalid format
             }
+        } else if (command.startsWith("E")) {
+            // Format: "E<channelIndex>,<minEndpoint>"
+            int commaIndex = command.indexOf(',');
+            if (commaIndex != -1) {
+                int channelIndex = command.substring(1, commaIndex).toInt();  // Extract channel index
+                uint16_t minEndpoint = command.substring(commaIndex + 1).toInt();  // Extract min endpoint
+                if (channelIndex >= 0 && channelIndex < 10) {
+                    inputHandler.channels[channelIndex].minEndpoint = minEndpoint;
+                    inputHandler.channels[channelIndex].maxEndpoint = 255 - minEndpoint;
+                    inputHandler.saveToEEPROM();
+                    loadChannels();
+                    Serial.println(F("Y"));  // Acknowledge successful update
+                } else {
+                    Serial.println(F("N"));  // Invalid channel index
+                }
+            } else {
+                Serial.println(F("N"));  // Invalid format
+            }
         } else {
             Serial.println(F("N"));
         }
