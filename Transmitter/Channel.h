@@ -134,7 +134,7 @@ public:
         }
 
         if (reverse) {
-            value = maxEndpoint - value;
+            value = 255 - value;
         }
 
         value = constrain(value + trim, 0, 255);
