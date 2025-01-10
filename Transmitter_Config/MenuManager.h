@@ -19,13 +19,38 @@ private:
 
     static const uint8_t maxVisibleItems = 3; // Number of scrollable lines (excluding the title line)
 
+    // New variables for update control
+    bool updateFlag;               // Flag indicating if an update is needed
+    unsigned long lastUpdateTime;   // Timestamp of the last LCD update
+    static const unsigned long updateInterval = 200; // Update interval in milliseconds
+
 public:
     MenuManager(LiquidCrystal_I2C* lcd, Channel* channels, uint8_t count)
         : lcd(lcd), channels(channels), channelCount(count), selectedIndex(0),
-          menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0), lastButtonPressTime(0) {}
+          menuLevel(CHANNEL_LIST), subMenuIndex(0), scrollOffset(0),
+          lastButtonPressTime(0), updateFlag(false), lastUpdateTime(0) {}
+
+    void handleMissedUpdates(){
+      if(updateFlag){
+        displayMenu();
+      }
+    }
 
     void displayMenu() {
-        lcd->clear();
+        unsigned long currentTime = millis();
+
+        // Check if the required update interval has passed
+        if (currentTime - lastUpdateTime < updateInterval) {
+            // If interval not passed, set the update flag and return
+            updateFlag = true;
+            return;
+        }
+
+        // Perform the LCD update
+        updateFlag = false;  // Reset the flag
+        lastUpdateTime = currentTime;  // Update the timestamp
+
+        lcd->clear();  // Clear the screen for the new menu display
 
         switch (menuLevel) {
             case CHANNEL_LIST:

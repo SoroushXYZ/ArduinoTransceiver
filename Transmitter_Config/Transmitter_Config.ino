@@ -60,9 +60,9 @@ void setup() {
 
   // Initialize channel names
   channels[0].setName("Throttle");
-  channels[1].setName("Ailerons");
+  channels[1].setName("Rudder");
   channels[2].setName("Elevator");
-  channels[3].setName("Rudder");
+  channels[3].setName("Ailerons");
   channels[4].setName("Flaps");
 
   // Initialize pins
@@ -87,6 +87,7 @@ void setup() {
 void loop() {
   handleEncoder();
   handleTimedUpdates(menu);
+  menu.handleMissedUpdates();
 }
 
 void handleEncoder() {
